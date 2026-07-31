@@ -1110,7 +1110,7 @@ local LucideDirectMap = {
 }
 
 function Library:GetIcon(IconName)
-    return nil
+    return Library:GetCustomIcon(IconName)
 end
 
 function Library:GetCustomIcon(IconName)
@@ -1118,12 +1118,16 @@ function Library:GetCustomIcon(IconName)
         return nil
     end
 
-    if tonumber(IconName) then
-        IconName = string.format("rbxassetid://%s", tostring(IconName))
+    if typeof(IconName) == "string" then
+        local lowerName = string.lower(IconName)
+        if LucideDirectMap[lowerName] then
+            IconName = "rbxassetid://" .. LucideDirectMap[lowerName]
+        end
+    elseif tonumber(IconName) then
+        IconName = "rbxassetid://" .. tostring(IconName)
     end
 
-    local CustomIcon = IsValidCustomIcon(IconName)
-    if CustomIcon then
+    if typeof(IconName) == "string" and (IconName:sub(1, 13) == "rbxassetid://" or IsValidCustomIcon(IconName)) then
         return {
             Url = IconName,
             ImageRectOffset = Vector2.zero,
@@ -7158,7 +7162,7 @@ function Library:CreateWindow(WindowInfo)
         )
         New("UIPadding", {
             PaddingBottom = UDim.new(0, 8),
-            PaddingLeft = UDim.new(0, 8),
+            PaddingLeft = UDim.new(0, 26),
             PaddingRight = UDim.new(0, 8),
             PaddingTop = UDim.new(0, 8),
             Parent = SearchBox,
@@ -7168,30 +7172,17 @@ function Library:CreateWindow(WindowInfo)
             Parent = SearchBox,
         })
 
-        local SearchIcon = { Url = "rbxassetid://6031154871", ImageRectOffset = Vector2.zero, ImageRectSize = Vector2.zero }
-        New("ImageLabel", {
-            Image = SearchIcon.Url,
-            ImageColor3 = "FontColor",
-            ImageRectOffset = SearchIcon.ImageRectOffset,
-            ImageRectSize = SearchIcon.ImageRectSize,
-            ImageTransparency = 0.5,
-            Size = UDim2.fromScale(1, 1),
-            SizeConstraint = Enum.SizeConstraint.RelativeYY,
-            Parent = SearchBox,
-        })
-
-        local MoveIcon = { Url = "rbxassetid://6034818379", ImageRectOffset = Vector2.zero, ImageRectSize = Vector2.zero }
-        New("ImageLabel", {
-            AnchorPoint = Vector2.new(1, 0.5),
-            Image = MoveIcon.Url,
-            ImageColor3 = "OutlineColor",
-            ImageRectOffset = MoveIcon.ImageRectOffset,
-            ImageRectSize = MoveIcon.ImageRectSize,
-            Position = UDim2.new(1, -10, 0.5, 0),
-            Size = UDim2.fromOffset(28, 28),
-            SizeConstraint = Enum.SizeConstraint.RelativeYY,
-            Parent = TopBar,
-        })
+        local SearchIcon = Library:GetCustomIcon("search")
+        if SearchIcon then
+            New("ImageLabel", {
+                Image = SearchIcon.Url,
+                ImageColor3 = "FontColor",
+                ImageTransparency = 0.5,
+                Position = UDim2.fromOffset(4, 4),
+                Size = UDim2.fromOffset(16, 16),
+                Parent = SearchBox,
+            })
+        end
 
 
         BottomBackground = New("Frame", {
@@ -7235,7 +7226,7 @@ function Library:CreateWindow(WindowInfo)
         })
 
 
-        local ResizeIcon = { Url = "rbxassetid://6035047409", ImageRectOffset = Vector2.zero, ImageRectSize = Vector2.zero }
+        local ResizeIcon = { Url = "rbxassetid://10747384306", ImageRectOffset = Vector2.zero, ImageRectSize = Vector2.zero }
         if WindowInfo.Resizable then
             ResizeButton = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0),
