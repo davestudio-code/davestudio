@@ -6063,11 +6063,11 @@ do
                 if Info.Compact then
                     DisplayLabel.Text =
                         string.format("%s: %s%s%s", Slider.Text, Slider.Prefix, Slider.Value, Slider.Suffix)
-                elseif Info.HideMax then
+                elseif Info.HideMax ~= false then
                     DisplayLabel.Text = string.format("%s%s%s", Slider.Prefix, Slider.Value, Slider.Suffix)
                 else
                     DisplayLabel.Text = string.format(
-                        "%s%s%s/%s%s%s",
+                        "%s%s%s / %s%s%s",
                         Slider.Prefix,
                         Slider.Value,
                         Slider.Suffix,
