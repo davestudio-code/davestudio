@@ -1185,6 +1185,7 @@ local LucideDirectMap = {
     ["home"] = "10723346959",
     ["store"] = "10734952036",
     ["shop"] = "10734952036",
+    ["shopping-bag"] = "10734952036",
     ["paw-print"] = "10723385732",
     ["wrench"] = "10734978000",
     ["calendar"] = "10709751996",
@@ -1207,7 +1208,7 @@ local LucideDirectMap = {
     ["lock"] = "10723352726",
     ["key"] = "10723352726",
     ["unlock"] = "10734961556",
-    ["edit"] = "10723344670",
+    ["edit"] = "10723346959",
     ["eye"] = "10723345088",
     ["eye-off"] = "10723345228",
     ["upload"] = "10734962068",
@@ -1232,40 +1233,66 @@ local LucideDirectMap = {
     ["sprout"] = "10734951239",
     ["seeds"] = "10734951239",
     ["sliders"] = "10734951173",
-    ["alert-triangle"] = "10709751352"
+    ["alert-triangle"] = "10709751352",
+    ["move"] = "10723352726",
+    ["move-diagonal-2"] = "10734933966",
+    ["chevron-up"] = "10709752906",
+    ["chevron-down"] = "10709752906"
 }
 
-function Library:GetIcon(IconName: string)
-    return Library:GetCustomIcon(IconName)
-end
-
-function Library:GetCustomIcon(IconName: string): any
+function Library:GetCustomIcon(IconName: any): any
     if not IconName then
         return nil
     end
 
-    if typeof(IconName) == "string" and LucideDirectMap[string.lower(IconName)] then
-        IconName = "rbxassetid://" .. LucideDirectMap[string.lower(IconName)]
+    if typeof(IconName) == "table" and IconName.Url then
+        return IconName
+    end
+
+    if typeof(IconName) == "string" then
+        local lowerName = string.lower(IconName)
+
+        if FetchIcons and Icons and type(Icons.GetAsset) == "function" then
+            local ok, iconData = pcall(Icons.GetAsset, lowerName)
+            if ok and type(iconData) == "table" and iconData.Url then
+                return {
+                    Url = iconData.Url,
+                    ImageRectOffset = iconData.ImageRectOffset or Vector2.zero,
+                    ImageRectSize = iconData.ImageRectSize or Vector2.zero,
+                    Custom = false,
+                }
+            end
+        end
+
+        if LucideDirectMap[lowerName] then
+            IconName = "rbxassetid://" .. LucideDirectMap[lowerName]
+        end
     elseif tonumber(IconName) then
         IconName = string.format("rbxassetid://%s", tostring(IconName))
     end
 
-    if IsCustomAssetIcon(IconName, true) then
-        return {
-            Url = IconName,
-            ImageRectOffset = Vector2.zero,
-            ImageRectSize = Vector2.zero,
-        }
-    elseif IsValidCustomIcon(IconName) then
-        return {
-            Url = IconName,
-            ImageRectOffset = Vector2.zero,
-            ImageRectSize = Vector2.zero,
-            Custom = true,
-        }
+    if typeof(IconName) == "string" then
+        if IsCustomAssetIcon and IsCustomAssetIcon(IconName, true) then
+            return {
+                Url = IconName,
+                ImageRectOffset = Vector2.zero,
+                ImageRectSize = Vector2.zero,
+            }
+        elseif IsValidCustomIcon and IsValidCustomIcon(IconName) then
+            return {
+                Url = IconName,
+                ImageRectOffset = Vector2.zero,
+                ImageRectSize = Vector2.zero,
+                Custom = true,
+            }
+        end
     end
 
     return nil
+end
+
+function Library:GetIcon(IconName: string)
+    return Library:GetCustomIcon(IconName)
 end
 
 function Library:Validate(Table: { [string]: any }, Template: { [string]: any }): { [string]: any }
@@ -8768,13 +8795,14 @@ function Library:CreateWindow(WindowInfo)
             })
         end
 
-        if MoveIcon then
+        local CurrentMoveIcon = MoveIcon or Library:GetIcon("move")
+        if CurrentMoveIcon then
             New("ImageLabel", {
                 AnchorPoint = Vector2.new(1, 0.5),
-                Image = MoveIcon.Url,
+                Image = CurrentMoveIcon.Url,
                 ImageColor3 = "OutlineColor",
-                ImageRectOffset = MoveIcon.ImageRectOffset,
-                ImageRectSize = MoveIcon.ImageRectSize,
+                ImageRectOffset = CurrentMoveIcon.ImageRectOffset,
+                ImageRectSize = CurrentMoveIcon.ImageRectSize,
                 Position = UDim2.new(1, -10, 0.5, 0),
                 Size = UDim2.fromOffset(28, 28),
                 SizeConstraint = Enum.SizeConstraint.RelativeYY,
@@ -8842,11 +8870,12 @@ function Library:CreateWindow(WindowInfo)
             end)
         end
 
+        local CurrentResizeIcon = ResizeIcon or Library:GetIcon("move-diagonal-2")
         New("ImageLabel", {
-            Image = ResizeIcon and ResizeIcon.Url or "",
+            Image = CurrentResizeIcon and CurrentResizeIcon.Url or "",
             ImageColor3 = "FontColor",
-            ImageRectOffset = ResizeIcon and ResizeIcon.ImageRectOffset or Vector2.zero,
-            ImageRectSize = ResizeIcon and ResizeIcon.ImageRectSize or Vector2.zero,
+            ImageRectOffset = CurrentResizeIcon and CurrentResizeIcon.ImageRectOffset or Vector2.zero,
+            ImageRectSize = CurrentResizeIcon and CurrentResizeIcon.ImageRectSize or Vector2.zero,
             ImageTransparency = 0.5,
             Position = UDim2.fromOffset(2, 2),
             Size = UDim2.new(1, -4, 1, -4),
@@ -9898,11 +9927,12 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 if Info.DisableCollapsing ~= true then
+                    local CurrentArrowIcon = ArrowIcon or Library:GetIcon("chevron-down") or Library:GetIcon("chevron-up")
                     GroupboxCollapseArrow = New("ImageButton", {
-                        Image = ArrowIcon and ArrowIcon.Url or "",
+                        Image = CurrentArrowIcon and CurrentArrowIcon.Url or "",
                         ImageColor3 = "WhiteColor",
-                        ImageRectOffset = ArrowIcon and ArrowIcon.ImageRectOffset or Vector2.zero,
-                        ImageRectSize = ArrowIcon and ArrowIcon.ImageRectSize or Vector2.zero,
+                        ImageRectOffset = CurrentArrowIcon and CurrentArrowIcon.ImageRectOffset or Vector2.zero,
+                        ImageRectSize = CurrentArrowIcon and CurrentArrowIcon.ImageRectSize or Vector2.zero,
                         BackgroundTransparency = 1,
                         Rotation = 180,
                         Position = UDim2.new(1, -(22 + 6), 0, 6),

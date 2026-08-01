@@ -54,52 +54,10 @@ function GlobalUI.CreateWindow(title)
 end
 
 function GlobalUI.MakeCollapsible(groupbox, startCollapsed)
-    local collapsed = not not startCollapsed
-    local originalResize = groupbox.Resize
-    
-    local arrow = Instance.new("TextButton")
-    arrow.Size = UDim2.new(0, 30, 0, 30)
-    arrow.Position = UDim2.new(1, -35, 0, 2)
-    arrow.BackgroundTransparency = 1
-    arrow.TextColor3 = Color3.fromRGB(200, 200, 200)
-    arrow.TextSize = 14
-    arrow.Font = Enum.Font.RobotoMono
-    arrow.Text = collapsed and ">" or "v"
-    arrow.ZIndex = 100
-    arrow.Parent = groupbox.Holder
-    
-    local headerButton = Instance.new("TextButton")
-    headerButton.Size = UDim2.new(1, 0, 0, 34)
-    headerButton.BackgroundTransparency = 1
-    headerButton.Text = ""
-    headerButton.ZIndex = 99
-    headerButton.Parent = groupbox.Holder
-    
-    if collapsed then
-        groupbox.Container.Visible = false
-        groupbox.Holder.Size = UDim2.new(1, 0, 0, 34)
+    if not groupbox then return end
+    if groupbox.SetCollapsed then
+        groupbox:SetCollapsed(not not startCollapsed)
     end
-    
-    groupbox.Resize = function(self)
-        if collapsed then
-            groupbox.Holder.Size = UDim2.new(1, 0, 0, 34)
-        else
-            originalResize(self)
-        end
-        if groupbox.Tab and groupbox.Tab.RefreshSides then
-            groupbox.Tab:RefreshSides()
-        end
-    end
-    
-    local function toggle()
-        collapsed = not collapsed
-        arrow.Text = collapsed and ">" or "v"
-        groupbox.Container.Visible = not collapsed
-        groupbox:Resize()
-    end
-    
-    arrow.MouseButton1Click:Connect(toggle)
-    headerButton.MouseButton1Click:Connect(toggle)
 end
 
 GlobalUI.DiscordWebhookUrl = ""
