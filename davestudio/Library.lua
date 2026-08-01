@@ -1254,9 +1254,18 @@ function Library:GetCustomIcon(IconName: any): any
 
     if typeof(IconName) == "string" then
         local lowerName = string.lower(IconName)
+        local aliasMap = {
+            ["layout"] = "layout-dashboard",
+            ["paw"] = "paw-print",
+            ["gifting"] = "gift",
+            ["misc"] = "settings",
+            ["automation"] = "play",
+            ["shop"] = "shopping-cart"
+        }
+        local searchName = aliasMap[lowerName] or lowerName
 
         if FetchIcons and Icons and type(Icons.GetAsset) == "function" then
-            local ok, iconData = pcall(Icons.GetAsset, lowerName)
+            local ok, iconData = pcall(Icons.GetAsset, searchName)
             if ok and type(iconData) == "table" and iconData.Url then
                 return {
                     Url = iconData.Url,
@@ -1267,8 +1276,8 @@ function Library:GetCustomIcon(IconName: any): any
             end
         end
 
-        if LucideDirectMap[lowerName] then
-            IconName = "rbxassetid://" .. LucideDirectMap[lowerName]
+        if LucideDirectMap[searchName] or LucideDirectMap[lowerName] then
+            IconName = "rbxassetid://" .. (LucideDirectMap[searchName] or LucideDirectMap[lowerName])
         end
     elseif tonumber(IconName) then
         IconName = string.format("rbxassetid://%s", tostring(IconName))
