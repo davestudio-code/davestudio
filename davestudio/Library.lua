@@ -1152,7 +1152,7 @@ type IconModule = {
 
 local FetchIcons, Icons = pcall(function()
     return loadstring(
-        game:HttpGet("https://raw.githubusercontent.com/deividcomsono/lucide-roblox-direct/main/source.lua")
+        game:HttpGet("https://gitlab.com/upio/lucide-roblox-direct/-/raw/main/source.lua")
     )()
 end)
 
@@ -2148,6 +2148,7 @@ function Library:AddDraggableButton(...)
         BackgroundColor3 = "BackgroundColor",
         Position = UDim2.fromOffset(6, 6),
         TextSize = 16,
+        RichText = true,
         ZIndex = 10,
         Parent = ScreenGui,
     })
@@ -2197,10 +2198,11 @@ function Library:AddDraggableButton(...)
     end)
 
     function DraggableButton:SetText(Text: string)
-        local X, Y = Library:GetTextBounds(Text, Library.Scheme.Font, 16)
+        local CleanText = string.gsub(Text, "<[^>]+>", "")
+        local X, Y = Library:GetTextBounds(CleanText, Library.Scheme.Font, 16)
 
         Button.Text = Text
-        Button.Size = UDim2.fromOffset(X * 2, Y * 2)
+        Button.Size = UDim2.fromOffset(X + 24, Y + 12)
     end
 
     Library:MakeDraggable(Button, Button, true)
@@ -11278,32 +11280,20 @@ function Library:CreateWindow(WindowInfo)
     end
 
     if Library.IsMobile then
-        local ToggleButton = Library:AddDraggableButton("Toggle", function()
+        local ToggleButton = Library:AddDraggableButton('<font color="#FFFFFF">dave</font><font color="#00C864">studio</font>', function()
             Library:Toggle()
-        end, true, true)
-
-        local LockButton = Library:AddDraggableButton("Lock", function(self)
-            Library.CantDragForced = not Library.CantDragForced
-            self:SetText(Library.CantDragForced and "Unlock" or "Lock")
         end, true, true)
 
         if WindowInfo.MobileButtonsSide == "Right" then
             ToggleButton.Button.AnchorPoint = Vector2.new(1, 0)
             ToggleButton.Button.Position = UDim2.new(1, -6, 0, 6)
-
-            LockButton.Button.AnchorPoint = Vector2.new(1, 0)
-            LockButton.Button.Position = UDim2.new(1, -(ToggleButton.Button.Size.X.Offset + 12), 0, 6)
         else
             ToggleButton.Button.AnchorPoint = Vector2.new(0, 0)
             ToggleButton.Button.Position = UDim2.fromOffset(6, 6)
-
-            LockButton.Button.AnchorPoint = Vector2.new(0, 0)
-            LockButton.Button.Position = UDim2.fromOffset(ToggleButton.Button.Size.X.Offset + 12, 6)
         end
 
         if WindowInfo.ShowMobileButtons == false then
             ToggleButton.Button.Visible = false
-            LockButton.Button.Visible = false
         end
     end
 
