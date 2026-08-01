@@ -1151,9 +1151,9 @@ type IconModule = {
 }
 
 local FetchIcons, Icons = pcall(function()
-    return (loadstring(
-        game:HttpGet("https://gitlab.com/upio/lucide-roblox-direct/-/raw/main/source.lua")
-    ) :: () -> IconModule)()
+    return loadstring(
+        game:HttpGet("https://raw.githubusercontent.com/deividcomsono/lucide-roblox-direct/main/source.lua")
+    )()
 end)
 
 function Library:GetIcon(IconName: string)
@@ -1169,12 +1169,84 @@ function Library:GetIcon(IconName: string)
     return Icon
 end
 
+local LucideDirectMap = {
+    ["user"] = "10747373176",
+    ["account"] = "10747373176",
+    ["message-square"] = "10734887304",
+    ["webhook"] = "10734887304",
+    ["play"] = "10723415903",
+    ["automation"] = "10723415903",
+    ["shopping-cart"] = "10709769841",
+    ["crosshair"] = "10709753149",
+    ["gift"] = "10723345434",
+    ["gifting"] = "10723345434",
+    ["settings"] = "10734950309",
+    ["misc"] = "10734950309",
+    ["home"] = "10723346959",
+    ["store"] = "10734952036",
+    ["shop"] = "10734952036",
+    ["paw-print"] = "10723385732",
+    ["wrench"] = "10734978000",
+    ["calendar"] = "10709751996",
+    ["trash"] = "10734960888",
+    ["refresh-cw"] = "10734933966",
+    ["search"] = "10734943674",
+    ["shield"] = "10734947495",
+    ["heart"] = "10723345990",
+    ["zap"] = "10734983214",
+    ["sprinkler"] = "10734983214",
+    ["mail"] = "10723347185",
+    ["download"] = "10723344270",
+    ["star"] = "10734951478",
+    ["check"] = "10709752906",
+    ["x"] = "10734983103",
+    ["info"] = "10723347185",
+    ["list"] = "10723351944",
+    ["bell"] = "10709751633",
+    ["clock"] = "10709752996",
+    ["lock"] = "10723352726",
+    ["key"] = "10723352726",
+    ["unlock"] = "10734961556",
+    ["edit"] = "10723344670",
+    ["eye"] = "10723345088",
+    ["eye-off"] = "10723345228",
+    ["upload"] = "10734962068",
+    ["folder"] = "10723345330",
+    ["file"] = "10723345276",
+    ["map-pin"] = "10723352988",
+    ["package"] = "10723385623",
+    ["crates"] = "10723385623",
+    ["box"] = "10723385623",
+    ["tag"] = "10734953926",
+    ["sparkles"] = "10734951173",
+    ["crown"] = "10709753174",
+    ["award"] = "10709751471",
+    ["trophy"] = "10734961017",
+    ["target"] = "10734953982",
+    ["flame"] = "10723345300",
+    ["sun"] = "10734953832",
+    ["moon"] = "10723353245",
+    ["cloud"] = "10709753051",
+    ["droplet"] = "10723344444",
+    ["water"] = "10723344444",
+    ["sprout"] = "10734951239",
+    ["seeds"] = "10734951239",
+    ["sliders"] = "10734951173",
+    ["alert-triangle"] = "10709751352"
+}
+
+function Library:GetIcon(IconName: string)
+    return Library:GetCustomIcon(IconName)
+end
+
 function Library:GetCustomIcon(IconName: string): any
     if not IconName then
         return nil
     end
 
-    if tonumber(IconName) then
+    if typeof(IconName) == "string" and LucideDirectMap[string.lower(IconName)] then
+        IconName = "rbxassetid://" .. LucideDirectMap[string.lower(IconName)]
+    elseif tonumber(IconName) then
         IconName = string.format("rbxassetid://%s", tostring(IconName))
     end
 
@@ -1191,11 +1263,6 @@ function Library:GetCustomIcon(IconName: string): any
             ImageRectSize = Vector2.zero,
             Custom = true,
         }
-    end
-
-    local LucideIcon = Library:GetIcon(IconName)
-    if LucideIcon then
-        return LucideIcon
     end
 
     return nil
