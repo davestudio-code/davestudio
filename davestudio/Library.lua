@@ -2229,10 +2229,11 @@ function Library:AddDraggableButton(...)
 
     function DraggableButton:SetText(Text: string)
         local CleanText = string.gsub(Text, "<[^>]+>", "")
-        local X, Y = Library:GetTextBounds(CleanText, Library.Scheme.Font, 16)
+        local X, Y = Library:GetTextBounds(CleanText, Library.Scheme.Font, 14)
 
         Button.Text = Text
-        Button.Size = UDim2.fromOffset(X + 24, Y + 12)
+        Button.TextSize = 14
+        Button.Size = UDim2.fromOffset(X + 16, 26)
     end
 
     Library:MakeDraggable(Button, Button, true)
@@ -11311,8 +11312,7 @@ function Library:CreateWindow(WindowInfo)
     if WindowInfo.AutoShow and not Library.ActiveLoading then
         task.spawn(Library.Toggle)
     end
-
-    if Library.IsMobile then
+    if WindowInfo.ShowMobileButtons ~= false then
         local ToggleButton = Library:AddDraggableButton('<font color="#FFFFFF">dave</font><font color="#00C864">studio</font>', function()
             Library:Toggle()
         end, true, true)
@@ -11323,10 +11323,6 @@ function Library:CreateWindow(WindowInfo)
         else
             ToggleButton.Button.AnchorPoint = Vector2.new(0, 0)
             ToggleButton.Button.Position = UDim2.fromOffset(6, 6)
-        end
-
-        if WindowInfo.ShowMobileButtons == false then
-            ToggleButton.Button.Visible = false
         end
     end
 
