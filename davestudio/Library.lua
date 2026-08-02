@@ -6683,13 +6683,18 @@ do
                 if aSel ~= bSel then
                     return aSel
                 end
-                local aStr = tostring(a)
-                local bStr = tostring(b)
-                if aStr == "None" then return true end
-                if bStr == "None" then return false end
-                if aStr == "All" then return true end
-                if bStr == "All" then return false end
-                return aStr:lower() < bStr:lower()
+                local getWeight = function(str)
+                    local s = tostring(str)
+                    if s == "None" then return 1 end
+                    if s == "All" then return 2 end
+                    return 3
+                end
+                local wA = getWeight(a)
+                local wB = getWeight(b)
+                if wA ~= wB then
+                    return wA < wB
+                end
+                return tostring(a):lower() < tostring(b):lower()
             end)
 
             local DisabledValues = Dropdown.DisabledValues
