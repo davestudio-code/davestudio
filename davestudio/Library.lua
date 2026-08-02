@@ -492,6 +492,7 @@ local Templates = {
 
         Multi = false,
         DragSelect = false,
+        Searchable = true,
         MaxVisibleDropdownItems = 8,
 
         Callback = function() end,
@@ -6664,7 +6665,27 @@ do
         end
 
         function Dropdown:BuildDropdownList()
-            local Values = Dropdown.Values
+            local Values = {}
+            for _, v in ipairs(Dropdown.Values) do
+                table.insert(Values, v)
+            end
+
+            table.sort(Values, function(a, b)
+                local aSel = false
+                local bSel = false
+                if Info.Multi then
+                    aSel = not not (Dropdown.Value and Dropdown.Value[a])
+                    bSel = not not (Dropdown.Value and Dropdown.Value[b])
+                else
+                    aSel = (Dropdown.Value == a)
+                    bSel = (Dropdown.Value == b)
+                end
+                if aSel ~= bSel then
+                    return aSel
+                end
+                return tostring(a):lower() < tostring(b):lower()
+            end)
+
             local DisabledValues = Dropdown.DisabledValues
 
             StopDragSelect()
