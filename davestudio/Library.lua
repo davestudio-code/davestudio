@@ -7034,10 +7034,13 @@ do
                 table.insert(Defaults, Index)
             end
         elseif typeof(Info.Default) == "table" then
-            for _, Value in next, Info.Default do
-                local Index = table.find(Dropdown.Values, Value)
-                if Index then
-                    table.insert(Defaults, Index)
+            for Key, Value in next, Info.Default do
+                local ItemName = (typeof(Value) == "boolean" and Value == true) and Key or Value
+                if typeof(ItemName) == "string" then
+                    local Index = table.find(Dropdown.Values, ItemName)
+                    if Index then
+                        table.insert(Defaults, Index)
+                    end
                 end
             end
         elseif Dropdown.Values[Info.Default] ~= nil then
