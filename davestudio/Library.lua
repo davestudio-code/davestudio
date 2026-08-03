@@ -492,7 +492,6 @@ local Templates = {
 
         Multi = false,
         DragSelect = false,
-        Searchable = true,
         MaxVisibleDropdownItems = 8,
 
         Callback = function() end,
@@ -6468,7 +6467,7 @@ do
         if Info.Searchable then
             SearchBox = New("TextBox", {
                 BackgroundTransparency = 1,
-                PlaceholderText = Info.SearchPlaceholder or "Search Item...",
+                PlaceholderText = "Search...",
                 Position = UDim2.fromOffset(-8, 0),
                 Size = UDim2.new(1, -12, 1, 0),
                 TextSize = 14,
@@ -6665,38 +6664,7 @@ do
         end
 
         function Dropdown:BuildDropdownList()
-            local Values = {}
-            for _, v in ipairs(Dropdown.Values) do
-                table.insert(Values, v)
-            end
-
-            table.sort(Values, function(a, b)
-                local aSel = false
-                local bSel = false
-                if Info.Multi then
-                    aSel = not not (Dropdown.Value and Dropdown.Value[a])
-                    bSel = not not (Dropdown.Value and Dropdown.Value[b])
-                else
-                    aSel = (Dropdown.Value == a)
-                    bSel = (Dropdown.Value == b)
-                end
-                if aSel ~= bSel then
-                    return aSel
-                end
-                local getWeight = function(str)
-                    local s = tostring(str)
-                    if s == "None" then return 1 end
-                    if s == "All" then return 2 end
-                    return 3
-                end
-                local wA = getWeight(a)
-                local wB = getWeight(b)
-                if wA ~= wB then
-                    return wA < wB
-                end
-                return tostring(a):lower() < tostring(b):lower()
-            end)
-
+            local Values = Dropdown.Values
             local DisabledValues = Dropdown.DisabledValues
 
             StopDragSelect()
@@ -7034,13 +7002,10 @@ do
                 table.insert(Defaults, Index)
             end
         elseif typeof(Info.Default) == "table" then
-            for Key, Value in next, Info.Default do
-                local ItemName = (typeof(Value) == "boolean" and Value == true) and Key or Value
-                if typeof(ItemName) == "string" then
-                    local Index = table.find(Dropdown.Values, ItemName)
-                    if Index then
-                        table.insert(Defaults, Index)
-                    end
+            for _, Value in next, Info.Default do
+                local Index = table.find(Dropdown.Values, Value)
+                if Index then
+                    table.insert(Defaults, Index)
                 end
             end
         elseif Dropdown.Values[Info.Default] ~= nil then
