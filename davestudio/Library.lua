@@ -8566,7 +8566,7 @@ function Library:CreateWindow(WindowInfo)
     local FooterLabel
     local TopBar
 
-    local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.28)
+    local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
 
