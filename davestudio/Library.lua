@@ -2238,11 +2238,11 @@ function Library:AddDraggableButton(...)
 
     function DraggableButton:SetText(Text: string)
         local CleanText = string.gsub(Text, "<[^>]+>", "")
-        local X, Y = Library:GetTextBounds(CleanText, Library.Scheme.Font, 14)
+        local X, Y = Library:GetTextBounds(CleanText, Library.Scheme.Font, 16)
 
         Button.Text = Text
-        Button.TextSize = 14
-        Button.Size = UDim2.fromOffset(X + 16, 26)
+        Button.TextSize = 16
+        Button.Size = UDim2.fromOffset(X + 24, 36)
     end
 
     Library:MakeDraggable(Button, Button, true)
