@@ -9,6 +9,7 @@ local UserInputService: UserInputService = cloneref(game:GetService("UserInputSe
 local TextService: TextService = cloneref(game:GetService("TextService"))
 local Teams: Teams = cloneref(game:GetService("Teams"))
 local TweenService: TweenService = cloneref(game:GetService("TweenService"))
+local GuiService: GuiService = cloneref(game:GetService("GuiService"))
 
 local getgenv = getgenv or function()
     return shared
