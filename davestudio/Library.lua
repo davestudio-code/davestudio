@@ -2624,19 +2624,16 @@ function Library:AddContextMenu(
         CurrentMenu = Table
         Table.Active = true
 
-        local GuiInset = (ParentGui and not ParentGui.IgnoreGuiInset) and GuiService:GetGuiInset() or Vector2.zero
-        local MenuScale = Menu:FindFirstChildOfClass("UIScale")
-        local currentScale = (MenuScale and MenuScale.Scale > 0) and MenuScale.Scale or 1
         if typeof(Offset) == "function" then
             local Off = Offset()
             Menu.Position = UDim2.fromOffset(
-                math.floor((Holder.AbsolutePosition.X + Off[1]) / currentScale),
-                math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Off[2]) / currentScale)
+                math.floor(Holder.AbsolutePosition.X + Off[1]),
+                math.floor(Holder.AbsolutePosition.Y + Off[2])
             )
         else
             Menu.Position = UDim2.fromOffset(
-                math.floor((Holder.AbsolutePosition.X + Offset[1]) / currentScale),
-                math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Offset[2]) / currentScale)
+                math.floor(Holder.AbsolutePosition.X + Offset[1]),
+                math.floor(Holder.AbsolutePosition.Y + Offset[2])
             )
         end
 
@@ -2689,19 +2686,16 @@ function Library:AddContextMenu(
         end
 
         Table.Signal = Holder:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
-            local GuiInset = (ParentGui and not ParentGui.IgnoreGuiInset) and GuiService:GetGuiInset() or Vector2.zero
-            local MenuScale = Menu:FindFirstChildOfClass("UIScale")
-            local currentScale = (MenuScale and MenuScale.Scale > 0) and MenuScale.Scale or 1
             if typeof(Offset) == "function" then
                 local Off = Offset()
                 Menu.Position = UDim2.fromOffset(
-                    math.floor((Holder.AbsolutePosition.X + Off[1]) / currentScale),
-                    math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Off[2]) / currentScale)
+                    math.floor(Holder.AbsolutePosition.X + Off[1]),
+                    math.floor(Holder.AbsolutePosition.Y + Off[2])
                 )
             else
                 Menu.Position = UDim2.fromOffset(
-                    math.floor((Holder.AbsolutePosition.X + Offset[1]) / currentScale),
-                    math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Offset[2]) / currentScale)
+                    math.floor(Holder.AbsolutePosition.X + Offset[1]),
+                    math.floor(Holder.AbsolutePosition.Y + Offset[2])
                 )
             end
 
