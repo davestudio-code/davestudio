@@ -2627,9 +2627,11 @@ function Library:AddContextMenu(
 
         local GuiInset = (ParentGui and not ParentGui.IgnoreGuiInset) and GuiService:GetGuiInset() or Vector2.zero
         local Off = typeof(Offset) == "function" and Offset() or Offset
+        local MenuScale = Menu:FindFirstChildOfClass("UIScale")
+        local currentScale = (MenuScale and MenuScale.Scale > 0) and MenuScale.Scale or 1
         Menu.Position = UDim2.fromOffset(
-            math.floor(Holder.AbsolutePosition.X + Off[1]),
-            math.floor(Holder.AbsolutePosition.Y - GuiInset.Y + Off[2])
+            math.floor((Holder.AbsolutePosition.X / currentScale) + Off[1]),
+            math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) / currentScale) + Off[2])
         )
 
         local TargetSize = typeof(Table.Size) == "function" and Table.Size() or Table.Size
