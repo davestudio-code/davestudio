@@ -6507,14 +6507,14 @@ do
             return ValueImage
         end
 
-        local ParentFrame = Library.MainFrame or DisplayContainer:FindFirstAncestorOfClass("ScreenGui")
+        local ParentFrame = Library.WindowContainer or Library.MainFrame or DisplayContainer:FindFirstAncestorOfClass("ScreenGui")
 
         local ModalOverlay = New("Frame", {
             BackgroundColor3 = "BackgroundColor",
             BorderSizePixel = 0,
             Name = "DropdownModalOverlay",
-            Position = UDim2.fromOffset(0, 49),
-            Size = UDim2.new(1, 0, 1, -69),
+            Position = UDim2.fromOffset(0, 0),
+            Size = UDim2.fromScale(1, 1),
             Visible = false,
             ZIndex = 100,
             Parent = ParentFrame,
@@ -6613,8 +6613,9 @@ do
                 end
                 CurrentMenu = self
                 self.Active = true
-                if Library.MainFrame and ModalOverlay.Parent ~= Library.MainFrame then
-                    ModalOverlay.Parent = Library.MainFrame
+                local TargetParent = Library.WindowContainer or Library.MainFrame
+                if TargetParent and ModalOverlay.Parent ~= TargetParent then
+                    ModalOverlay.Parent = TargetParent
                 end
                 ModalOverlay.Visible = true
                 ArrowImage.Rotation = 180
