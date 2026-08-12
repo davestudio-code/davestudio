@@ -6552,16 +6552,17 @@ do
 
         local DoneButton = New("TextButton", {
             AnchorPoint = Vector2.new(1, 0.5),
-            BackgroundColor3 = "AccentColor",
+            BackgroundColor3 = Color3.fromRGB(24, 28, 34),
             Position = UDim2.new(1, -14, 0.5, 0),
             Size = UDim2.fromOffset(64, 26),
             Text = "Done",
-            TextColor3 = Color3.fromRGB(15, 23, 18),
+            TextColor3 = Color3.fromRGB(52, 211, 153),
             TextSize = 12,
             ZIndex = 101,
             Parent = ModalHeader,
         })
         New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = DoneButton })
+        New("UIStroke", { Color = Color3.fromRGB(16, 185, 129), Parent = DoneButton })
 
         local ModalSearchBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
