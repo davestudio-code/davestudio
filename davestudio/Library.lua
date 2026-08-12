@@ -6552,11 +6552,11 @@ do
 
         local DoneButton = New("TextButton", {
             AnchorPoint = Vector2.new(1, 0.5),
-            BackgroundColor3 = Color3.fromRGB(110, 86, 207),
+            BackgroundColor3 = "AccentColor",
             Position = UDim2.new(1, -14, 0.5, 0),
             Size = UDim2.fromOffset(64, 26),
             Text = "Done",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextColor3 = Color3.fromRGB(15, 23, 18),
             TextSize = 12,
             ZIndex = 101,
             Parent = ModalHeader,
