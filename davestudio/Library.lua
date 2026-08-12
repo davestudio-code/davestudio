@@ -6503,41 +6503,142 @@ do
             return ValueImage
         end
 
-        local MenuTable = Library:AddContextMenu(
-            DisplayContainer,
-            function()
-                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), 0)
-            end,
-            function()
-                return { 0.5, DisplayContainer.AbsoluteSize.Y + 1.5 }
-            end,
-            2,
-            function(Active: boolean)
-                DisplayButton.TextTransparency = (Active and SearchBox) and 1 or 0
+        local ParentFrame = Library.MainFrame or DisplayContainer:FindFirstAncestorOfClass("ScreenGui")
 
-                ArrowImage.ImageTransparency = Active and 0 or 0.5
-                ArrowImage.Rotation = Active and 180 or 0
+        local ModalOverlay = New("Frame", {
+            BackgroundColor3 = "BackgroundColor",
+            BorderSizePixel = 0,
+            Name = "DropdownModalOverlay",
+            Position = UDim2.fromOffset(0, 49),
+            Size = UDim2.new(1, 0, 1, -69),
+            Visible = false,
+            ZIndex = 100,
+            Parent = ParentFrame,
+        })
+        table.insert(Library.Scales, New("UIScale", { Parent = ModalOverlay }))
 
-                if SearchBox then
-                    SearchBox.Text = ""
-                    SearchBox.Visible = Active
+        local ModalHeader = New("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 44),
+            ZIndex = 101,
+            Parent = ModalOverlay,
+        })
+
+        local ModalIcon = New("TextLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(14, 10),
+            Size = UDim2.fromOffset(24, 24),
+            Text = "🌱",
+            TextSize = 18,
+            ZIndex = 101,
+            Parent = ModalHeader,
+        })
+
+        local ModalTitle = New("TextLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(44, 0),
+            Size = UDim2.new(1, -130, 1, 0),
+            Text = Dropdown.Text or "Select Option",
+            TextSize = 15,
+            TextColor3 = "FontColor",
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 101,
+            Parent = ModalHeader,
+        })
+
+        local DoneButton = New("TextButton", {
+            AnchorPoint = Vector2.new(1, 0.5),
+            BackgroundColor3 = Color3.fromRGB(110, 86, 207),
+            Position = UDim2.new(1, -14, 0.5, 0),
+            Size = UDim2.fromOffset(64, 26),
+            Text = "Done",
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 12,
+            ZIndex = 101,
+            Parent = ModalHeader,
+        })
+        New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = DoneButton })
+
+        local ModalSearchBox = New("TextBox", {
+            BackgroundColor3 = "MainColor",
+            PlaceholderText = "Search items...",
+            Position = UDim2.fromOffset(14, 44),
+            Size = UDim2.new(1, -28, 0, 34),
+            Text = "",
+            TextSize = 13,
+            TextColor3 = "FontColor",
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 101,
+            Parent = ModalOverlay,
+        })
+        New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = ModalSearchBox })
+        New("UIPadding", { PaddingLeft = UDim.new(0, 10), Parent = ModalSearchBox })
+
+        SearchBox = ModalSearchBox
+
+        local ListCard = New("Frame", {
+            BackgroundColor3 = "MainColor",
+            BorderSizePixel = 0,
+            Position = UDim2.fromOffset(14, 86),
+            Size = UDim2.new(1, -28, 1, -96),
+            ZIndex = 101,
+            Parent = ModalOverlay,
+        })
+        New("UICorner", { CornerRadius = UDim.new(0, 8), Parent = ListCard })
+        New("UIStroke", { Color = "OutlineColor", Parent = ListCard })
+
+        local ModalScrollFrame = New("ScrollingFrame", {
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(6, 6),
+            ScrollBarThickness = 4,
+            Size = UDim2.new(1, -12, 1, -12),
+            ZIndex = 102,
+            Parent = ListCard,
+        })
+        New("UIListLayout", { Padding = UDim.new(0, 4), Parent = ModalScrollFrame })
+
+        local MenuTable = {
+            Active = false,
+            Menu = ModalScrollFrame,
+            Open = function(self)
+                if CurrentMenu and CurrentMenu ~= self then
+                    CurrentMenu:Close()
                 end
-
-                DropdownCorner.BottomRightRadius = Active and UDim.new(0, 0) or UDim.new(0, Library.CornerRadius / 2)
-                DropdownCorner.BottomLeftRadius = Active and UDim.new(0, 0) or UDim.new(0, Library.CornerRadius / 2)
+                CurrentMenu = self
+                self.Active = true
+                if Library.MainFrame and ModalOverlay.Parent ~= Library.MainFrame then
+                    ModalOverlay.Parent = Library.MainFrame
+                end
+                ModalOverlay.Visible = true
+                ArrowImage.Rotation = 180
+                ArrowImage.ImageTransparency = 0
             end,
-            false,
-            "bottom",
-            "Dropdown"
-        )
+            Close = function(self)
+                if CurrentMenu == self then
+                    CurrentMenu = nil
+                end
+                self.Active = false
+                ModalOverlay.Visible = false
+                ArrowImage.Rotation = 0
+                ArrowImage.ImageTransparency = 0.5
+            end,
+            Toggle = function(self)
+                if self.Active then
+                    self:Close()
+                else
+                    self:Open()
+                end
+            end,
+            SetSize = function(self, func) end,
+        }
         Dropdown.Menu = MenuTable
 
-        function Dropdown:RecalculateListSize(Count)
-            local Y = math.clamp((Count or GetTableSize(Dropdown.Values)) * 21, 0, Info.MaxVisibleDropdownItems * 21)
+        DoneButton.MouseButton1Click:Connect(function()
+            MenuTable:Close()
+        end)
 
-            MenuTable:SetSize(function()
-                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), Y)
-            end)
+        function Dropdown:RecalculateListSize(Count)
         end
 
         function Dropdown:UpdateColors()
@@ -6700,47 +6801,42 @@ do
                 local ValueImage = GetValueImage(Value)
 
                 local Container = New("Frame", {
-                    BackgroundColor3 = "MainColor",
-                    BackgroundTransparency = 1,
+                    BackgroundColor3 = "BackgroundColor",
+                    BackgroundTransparency = Selected and 0 or 1,
                     LayoutOrder = IsDisabled and 1 or 0,
-                    Size = UDim2.new(1, 0, 0, 21),
+                    Size = UDim2.new(1, 0, 0, 34),
+                    ZIndex = 103,
                     Parent = MenuTable.Menu,
                 })
-
-                if ProcessedCount == TotalLen then
-                    local Corner = New("UICorner", {
-                        TopLeftRadius = UDim.new(0, 0),
-                        TopRightRadius = UDim.new(0, 0),
-                        BottomRightRadius = UDim.new(0, Library.CornerRadius / 2),
-                        BottomLeftRadius = UDim.new(0, Library.CornerRadius / 2),
-                        Parent = Container,
-                    }); table.insert(Library.SpecificCorners, Corner)
-                end
+                New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Container })
 
                 local Image = ValueImage and New("ImageLabel", {
                     BackgroundTransparency = 1,
                     Image = ValueImage.Url,
                     ImageRectOffset = ValueImage.ImageRectOffset,
                     ImageRectSize = ValueImage.ImageRectSize,
-                    ImageTransparency = 0.5,
+                    ImageTransparency = 0,
                     Size = UDim2.fromOffset(16, 16),
-                    Position = UDim2.fromOffset(4, 3),
+                    Position = UDim2.fromOffset(8, 9),
+                    ZIndex = 104,
                     Parent = Container,
                 })
 
                 local Button = New("TextButton", {
                     BackgroundTransparency = 1,
-                    Size = ValueImage and UDim2.new(1, -18, 0, 21) or UDim2.new(1, 0, 0, 21),
-                    Position = ValueImage and UDim2.fromOffset(18, 0) or UDim2.fromOffset(0, 0),
+                    Size = ValueImage and UDim2.new(1, -28, 1, 0) or UDim2.new(1, 0, 1, 0),
+                    Position = ValueImage and UDim2.fromOffset(28, 0) or UDim2.fromOffset(0, 0),
                     Text = FormattedValue,
-                    TextSize = 14,
-                    TextTransparency = 0.5,
+                    TextSize = 13,
+                    TextColor3 = "FontColor",
+                    TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.15,
                     TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 104,
                     Parent = Container,
                 })
                 New("UIPadding", {
-                    PaddingLeft = UDim.new(0, 7),
-                    PaddingRight = UDim.new(0, 7),
+                    PaddingLeft = UDim.new(0, 10),
+                    PaddingRight = UDim.new(0, 10),
                     Parent = Button,
                 })
 
