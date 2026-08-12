@@ -6795,11 +6795,14 @@ do
             local ProcessedCount = 0
             local TotalLen = GetTableSize(Values) + GetTableSize(DisabledValues)
 
+            local Query = SearchBox and SearchBox.Text:lower() or ""
+            local HasQuery = Query ~= ""
+
             for _, Value in Values do
                 ProcessedCount += 1
 
                 local FormattedValue = tostring(Info.FormatListValue and Info.FormatListValue(Value) or Value)
-                if SearchBox and not FormattedValue:lower():match(SearchBox.Text:lower()) then
+                if HasQuery and not FormattedValue:lower():find(Query, 1, true) then
                     continue
                 end
 
@@ -6808,6 +6811,13 @@ do
                 local IsDisabled = table.find(DisabledValues, Value)
                 local Table = {}
                 local ValueImage = GetValueImage(Value)
+
+                local Selected
+                if Info.Multi then
+                    Selected = Dropdown.Value[Value]
+                else
+                    Selected = Dropdown.Value == Value
+                end
 
                 local Container = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
@@ -6848,13 +6858,6 @@ do
                     PaddingRight = UDim.new(0, 10),
                     Parent = Button,
                 })
-
-                local Selected
-                if Info.Multi then
-                    Selected = Dropdown.Value[Value]
-                else
-                    Selected = Dropdown.Value == Value
-                end
 
                 function Table:UpdateButton()
                     if Info.Multi then
