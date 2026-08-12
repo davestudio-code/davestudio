@@ -9,7 +9,6 @@ local UserInputService: UserInputService = cloneref(game:GetService("UserInputSe
 local TextService: TextService = cloneref(game:GetService("TextService"))
 local Teams: Teams = cloneref(game:GetService("Teams"))
 local TweenService: TweenService = cloneref(game:GetService("TweenService"))
-local GuiService: GuiService = cloneref(game:GetService("GuiService"))
 
 local getgenv = getgenv or function()
     return shared
@@ -2626,13 +2625,20 @@ function Library:AddContextMenu(
         Table.Active = true
 
         local GuiInset = (ParentGui and not ParentGui.IgnoreGuiInset) and GuiService:GetGuiInset() or Vector2.zero
-        local Off = typeof(Offset) == "function" and Offset() or Offset
         local MenuScale = Menu:FindFirstChildOfClass("UIScale")
         local currentScale = (MenuScale and MenuScale.Scale > 0) and MenuScale.Scale or 1
-        Menu.Position = UDim2.fromOffset(
-            math.floor((Holder.AbsolutePosition.X / currentScale) + Off[1]),
-            math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) / currentScale) + Off[2])
-        )
+        if typeof(Offset) == "function" then
+            local Off = Offset()
+            Menu.Position = UDim2.fromOffset(
+                math.floor((Holder.AbsolutePosition.X + Off[1]) / currentScale),
+                math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Off[2]) / currentScale)
+            )
+        else
+            Menu.Position = UDim2.fromOffset(
+                math.floor((Holder.AbsolutePosition.X + Offset[1]) / currentScale),
+                math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Offset[2]) / currentScale)
+            )
+        end
 
         local TargetSize = typeof(Table.Size) == "function" and Table.Size() or Table.Size
 
@@ -2683,15 +2689,19 @@ function Library:AddContextMenu(
         end
 
         Table.Signal = Holder:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+            local GuiInset = (ParentGui and not ParentGui.IgnoreGuiInset) and GuiService:GetGuiInset() or Vector2.zero
+            local MenuScale = Menu:FindFirstChildOfClass("UIScale")
+            local currentScale = (MenuScale and MenuScale.Scale > 0) and MenuScale.Scale or 1
             if typeof(Offset) == "function" then
+                local Off = Offset()
                 Menu.Position = UDim2.fromOffset(
-                    math.floor(Holder.AbsolutePosition.X + Offset()[1]),
-                    math.floor(Holder.AbsolutePosition.Y + Offset()[2])
+                    math.floor((Holder.AbsolutePosition.X + Off[1]) / currentScale),
+                    math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Off[2]) / currentScale)
                 )
             else
                 Menu.Position = UDim2.fromOffset(
-                    math.floor(Holder.AbsolutePosition.X + Offset[1]),
-                    math.floor(Holder.AbsolutePosition.Y + Offset[2])
+                    math.floor((Holder.AbsolutePosition.X + Offset[1]) / currentScale),
+                    math.floor(((Holder.AbsolutePosition.Y - GuiInset.Y) + Offset[2]) / currentScale)
                 )
             end
 
@@ -6501,10 +6511,10 @@ do
         local MenuTable = Library:AddContextMenu(
             DisplayContainer,
             function()
-                return UDim2.fromOffset(DisplayContainer.AbsoluteSize.X, 0)
+                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), 0)
             end,
             function()
-                return { 0, DisplayContainer.AbsoluteSize.Y + 1.5 }
+                return { 0.5, DisplayContainer.AbsoluteSize.Y + 1.5 }
             end,
             2,
             function(Active: boolean)
@@ -6531,7 +6541,7 @@ do
             local Y = math.clamp((Count or GetTableSize(Dropdown.Values)) * 21, 0, Info.MaxVisibleDropdownItems * 21)
 
             MenuTable:SetSize(function()
-                return UDim2.fromOffset(DisplayContainer.AbsoluteSize.X, Y)
+                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), Y)
             end)
         end
 
@@ -6754,10 +6764,10 @@ do
                     end
 
                     Container.BackgroundTransparency = Selected and 0 or 1
-                    Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
+                    Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.15
 
                     if Image then
-                        Image.ImageTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
+                        Image.ImageTransparency = IsDisabled and 0.8 or Selected and 0 or 0.15
                     end
                 end
 
@@ -6765,6 +6775,19 @@ do
                 Table.Value = Value
 
                 if not IsDisabled then
+                    Button.MouseEnter:Connect(function()
+                        if not Selected then
+                            Container.BackgroundTransparency = 0.8
+                            Button.TextTransparency = 0
+                        end
+                    end)
+
+                    Button.MouseLeave:Connect(function()
+                        if not Selected then
+                            Container.BackgroundTransparency = 1
+                            Button.TextTransparency = 0.15
+                        end
+                    end)
                     Button.MouseButton1Click:Connect(function()
                         if DragSelecting then return end
 
