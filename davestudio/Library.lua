@@ -2625,14 +2625,15 @@ function Library:AddContextMenu(
         Table.Active = true
 
         if typeof(Offset) == "function" then
+            local Off = Offset()
             Menu.Position = UDim2.fromOffset(
-                math.floor(Holder.AbsolutePosition.X + Offset()[1]),
-                math.floor(Holder.AbsolutePosition.Y + Offset()[2])
+                math.floor((Holder.AbsolutePosition.X / Library.DPIScale) + Off[1]),
+                math.floor((Holder.AbsolutePosition.Y / Library.DPIScale) + Off[2])
             )
         else
             Menu.Position = UDim2.fromOffset(
-                math.floor(Holder.AbsolutePosition.X + Offset[1]),
-                math.floor(Holder.AbsolutePosition.Y + Offset[2])
+                math.floor((Holder.AbsolutePosition.X / Library.DPIScale) + Offset[1]),
+                math.floor((Holder.AbsolutePosition.Y / Library.DPIScale) + Offset[2])
             )
         end
 
@@ -6506,7 +6507,7 @@ do
                 return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), 0)
             end,
             function()
-                return { 0.5, DisplayContainer.AbsoluteSize.Y + 1.5 }
+                return { 0, (DisplayContainer.AbsoluteSize.Y / Library.DPIScale) + 1.5 }
             end,
             2,
             function(Active: boolean)
