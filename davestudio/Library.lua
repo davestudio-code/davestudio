@@ -1556,6 +1556,9 @@ function Library:GetTextBounds(Text: string, Font: Font, Size: number, Width: nu
 end
 
 function Library:MouseIsOverFrame(Frame: GuiObject, Mouse: Vector2): boolean
+    if not (Frame and typeof(Frame) == "Instance" and Frame:IsA("GuiObject") and Mouse) then
+        return false
+    end
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
     return Mouse.X >= AbsPos.X
         and Mouse.X <= AbsPos.X + AbsSize.X
@@ -2812,8 +2815,9 @@ Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input: InputObje
         if
             CurrentMenu
             and not (
-                Library:MouseIsOverFrame(CurrentMenu.Menu, Location)
-                or Library:MouseIsOverFrame(CurrentMenu.Holder, Location)
+                (CurrentMenu.Menu and Library:MouseIsOverFrame(CurrentMenu.Menu, Location))
+                or (CurrentMenu.Holder and Library:MouseIsOverFrame(CurrentMenu.Holder, Location))
+                or (CurrentMenu.Modal and Library:MouseIsOverFrame(CurrentMenu.Modal, Location))
             )
         then
             CurrentMenu:Close()
@@ -6600,7 +6604,9 @@ do
 
         local MenuTable = {
             Active = false,
+            Holder = DisplayContainer,
             Menu = ModalScrollFrame,
+            Modal = ModalOverlay,
             Open = function(self)
                 if CurrentMenu and CurrentMenu ~= self then
                     CurrentMenu:Close()
