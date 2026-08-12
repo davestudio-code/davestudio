@@ -6552,17 +6552,18 @@ do
 
         local DoneButton = New("TextButton", {
             AnchorPoint = Vector2.new(1, 0.5),
-            BackgroundColor3 = Color3.fromRGB(24, 28, 34),
+            BackgroundColor3 = Color3.fromRGB(30, 30, 38),
             Position = UDim2.new(1, -14, 0.5, 0),
             Size = UDim2.fromOffset(64, 26),
             Text = "Done",
-            TextColor3 = Color3.fromRGB(52, 211, 153),
+            TextColor3 = Color3.fromRGB(220, 220, 230),
             TextSize = 12,
             ZIndex = 101,
             Parent = ModalHeader,
         })
         New("UICorner", { CornerRadius = UDim.new(0, 6), Parent = DoneButton })
-        New("UIStroke", { Color = Color3.fromRGB(16, 185, 129), Parent = DoneButton })
+        New("UIStroke", { Color = Color3.fromRGB(50, 50, 62), Parent = DoneButton })
+        Library.Registry[DoneButton] = nil
 
         local ModalSearchBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
