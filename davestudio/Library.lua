@@ -9,6 +9,7 @@ local UserInputService: UserInputService = cloneref(game:GetService("UserInputSe
 local TextService: TextService = cloneref(game:GetService("TextService"))
 local Teams: Teams = cloneref(game:GetService("Teams"))
 local TweenService: TweenService = cloneref(game:GetService("TweenService"))
+local GuiService: GuiService = cloneref(game:GetService("GuiService"))
 
 local getgenv = getgenv or function()
     return shared
@@ -2624,18 +2625,12 @@ function Library:AddContextMenu(
         CurrentMenu = Table
         Table.Active = true
 
-        if typeof(Offset) == "function" then
-            local Off = Offset()
-            Menu.Position = UDim2.fromOffset(
-                math.floor((Holder.AbsolutePosition.X / Library.DPIScale) + Off[1]),
-                math.floor((Holder.AbsolutePosition.Y / Library.DPIScale) + Off[2])
-            )
-        else
-            Menu.Position = UDim2.fromOffset(
-                math.floor((Holder.AbsolutePosition.X / Library.DPIScale) + Offset[1]),
-                math.floor((Holder.AbsolutePosition.Y / Library.DPIScale) + Offset[2])
-            )
-        end
+        local GuiInset = (ParentGui and not ParentGui.IgnoreGuiInset) and GuiService:GetGuiInset() or Vector2.zero
+        local Off = typeof(Offset) == "function" and Offset() or Offset
+        Menu.Position = UDim2.fromOffset(
+            math.floor(Holder.AbsolutePosition.X + Off[1]),
+            math.floor(Holder.AbsolutePosition.Y - GuiInset.Y + Off[2])
+        )
 
         local TargetSize = typeof(Table.Size) == "function" and Table.Size() or Table.Size
 
@@ -6504,10 +6499,10 @@ do
         local MenuTable = Library:AddContextMenu(
             DisplayContainer,
             function()
-                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), 0)
+                return UDim2.fromOffset(DisplayContainer.AbsoluteSize.X, 0)
             end,
             function()
-                return { 0, (DisplayContainer.AbsoluteSize.Y / Library.DPIScale) + 1.5 }
+                return { 0, DisplayContainer.AbsoluteSize.Y + 1.5 }
             end,
             2,
             function(Active: boolean)
@@ -6534,7 +6529,7 @@ do
             local Y = math.clamp((Count or GetTableSize(Dropdown.Values)) * 21, 0, Info.MaxVisibleDropdownItems * 21)
 
             MenuTable:SetSize(function()
-                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale), Y)
+                return UDim2.fromOffset(DisplayContainer.AbsoluteSize.X, Y)
             end)
         end
 
