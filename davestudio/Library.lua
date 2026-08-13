@@ -4642,7 +4642,7 @@ do
         else
             Data.Text = First or ""
             Data.DoesWrap = Second or false
-            Data.Size = 14
+            Data.Size = 16
             Data.Visible = true
             Data.Idx = select(3, ...) or nil
         end
@@ -4866,7 +4866,7 @@ do
                 BackgroundColor3 = Button.Disabled and "BackgroundColor" or "MainColor",
                 Size = UDim2.fromScale(1, 1),
                 Text = Button.Text,
-                TextSize = 14,
+                TextSize = 16,
                 TextTransparency = 0.4,
                 Visible = Button.Visible,
                 Parent = Holder,
@@ -5210,7 +5210,7 @@ do
             Position = UDim2.fromOffset(26, 0),
             Size = UDim2.new(1, -26, 1, 0),
             Text = Toggle.Text,
-            TextSize = 14,
+            TextSize = 16,
             TextTransparency = 0.4,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Button,
@@ -5465,7 +5465,7 @@ do
             BackgroundTransparency = 1,
             Size = UDim2.new(1, -40, 1, 0),
             Text = Toggle.Text,
-            TextSize = 14,
+            TextSize = 16,
             TextTransparency = 0.4,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Button,
@@ -5739,7 +5739,7 @@ do
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 14),
             Text = Input.Text,
-            TextSize = 14,
+            TextSize = 16,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Holder,
         })
@@ -5967,7 +5967,7 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, 14),
                 Text = Slider.Text,
-                TextSize = 14,
+                TextSize = 16,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Holder,
             })
@@ -5992,7 +5992,7 @@ do
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 1),
             Text = "",
-            TextSize = 14,
+            TextSize = 16,
             ZIndex = Bar.ZIndex + 2,
             Parent = Bar,
         })
@@ -6009,7 +6009,7 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.fromScale(1, 1),
                 Text = "",
-                TextSize = 14,
+                TextSize = 16,
                 ZIndex = Bar.ZIndex + 3,
                 Visible = false,
                 ClearTextOnFocus = false,
@@ -6400,7 +6400,7 @@ do
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 14),
             Text = Dropdown.Text,
-            TextSize = 14,
+            TextSize = 16,
             TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not not Info.Text,
             ZIndex = 3,
@@ -6452,7 +6452,7 @@ do
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 21),
             Text = "---",
-            TextSize = 14,
+            TextSize = 16,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 2,
             Parent = DisplayContainer,
@@ -6477,7 +6477,7 @@ do
                 PlaceholderText = "Search...",
                 Position = UDim2.fromOffset(-8, 0),
                 Size = UDim2.new(1, -12, 1, 0),
-                TextSize = 14,
+                TextSize = 16,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = false,
                 Parent = DisplayButton,
