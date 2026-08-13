@@ -9802,7 +9802,7 @@ function Library:CreateWindow(WindowInfo)
                         BackgroundTransparency = 1,
                         Size = UDim2.fromOffset(0, 16),
                         Text = Name,
-                        TextSize = 15,
+                        TextSize = 18,
                         TextTransparency = 0.5,
                         Parent = ButtonContent,
                     })
@@ -10474,7 +10474,7 @@ function Library:CreateWindow(WindowInfo)
                 Position = UDim2.fromOffset(30, 0),
                 Size = UDim2.new(1, -30, 1, 0),
                 Text = Name,
-                TextSize = 16,
+                TextSize = 18,
                 TextTransparency = 0.5,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = not IsCompact,
