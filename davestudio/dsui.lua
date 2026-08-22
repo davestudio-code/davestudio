@@ -1,6 +1,10 @@
 local dsui = {}
 dsui.__index = dsui
 
+local API_KEY_FILE = "davestudio/davestudio_key.txt"
+dsui.API_KEY = ""
+dsui.AccentColor = Color3.fromRGB(0, 200, 100)
+
 local function loadCore()
     if isfolder and not isfolder("davestudio") then
         pcall(makefolder, "davestudio")
@@ -41,7 +45,154 @@ end
 
 local WindUI = loadCore()
 dsui.Core = WindUI
-dsui.AccentColor = Color3.fromRGB(0, 200, 100)
+
+function dsui.GetHWID()
+    local hwidStr = "N/A"
+    pcall(function()
+        if gethwid then hwidStr = gethwid()
+        elseif get_hwid then hwidStr = get_hwid()
+        elseif game:GetService("RbxAnalyticsService") and game:GetService("RbxAnalyticsService").GetClientId then
+            hwidStr = game:GetService("RbxAnalyticsService"):GetClientId()
+        elseif syn and syn.get_device_id then hwidStr = syn.get_device_id()
+        elseif getgenv and getgenv().gethwid then hwidStr = getgenv().gethwid()
+        end
+    end)
+    return hwidStr
+end
+
+function dsui.LoadKey()
+    local key = ""
+    if _G and (_G.DaveStudioKey or _G.DAVESTUDIO_API_KEY) then
+        key = _G.DaveStudioKey or _G.DAVESTUDIO_API_KEY
+    end
+    if key and key ~= "" then
+        dsui.API_KEY = key
+        return key
+    end
+    if isfile and readfile then
+        local ok, data = pcall(function()
+            if isfile(API_KEY_FILE) then
+                return readfile(API_KEY_FILE)
+            end
+            return nil
+        end)
+        if ok and data then
+            local clean = tostring(data):gsub("^%s+", ""):gsub("%s+$", "")
+            if clean ~= "" then
+                key = clean
+            end
+        end
+    end
+    if key and key ~= "" and _G then
+        _G.DaveStudioKey = key
+        _G.DAVESTUDIO_API_KEY = key
+    end
+    dsui.API_KEY = key
+    return key
+end
+
+function dsui.SaveKey(value)
+    local clean = tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    dsui.API_KEY = clean
+    if _G then
+        _G.DaveStudioKey = clean
+        _G.DAVESTUDIO_API_KEY = clean
+    end
+    if writefile then
+        pcall(function()
+            if isfolder and not isfolder("davestudio") and makefolder then
+                makefolder("davestudio")
+            end
+            writefile(API_KEY_FILE, clean)
+        end)
+    end
+end
+
+function dsui.ClearKey()
+    dsui.API_KEY = ""
+    if _G then
+        _G.DaveStudioKey = nil
+        _G.DAVESTUDIO_API_KEY = nil
+    end
+    if delfile and isfile then
+        pcall(function()
+            if isfile(API_KEY_FILE) then
+                delfile(API_KEY_FILE)
+            end
+        end)
+    end
+end
+
+function dsui.VerifyKey(value)
+    local clean = tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    if clean == "" then
+        return false, "Key cannot be empty"
+    end
+    if not clean:find("^davestudio%.") then
+        return false, "Invalid key format (must start with davestudio.)"
+    end
+
+    local R = (syn and syn.request)
+        or (http and http.request)
+        or http_request
+        or request
+        or (fluxus and fluxus.request)
+        or (krnl and krnl.request)
+
+    local hwid = dsui.GetHWID()
+    local url = string.format("https://gag.davestudio.online/verify?key=%s&hwid=%s", clean, game:GetService("HttpService"):UrlEncode(hwid))
+
+    local HS = game:GetService("HttpService")
+
+    if R then
+        local ok, res = pcall(function()
+            return R({
+                Url = url,
+                Method = "GET"
+            })
+        end)
+        if not ok or not res then
+            return false, "Connection to authentication server failed"
+        end
+        local c = tonumber(res.StatusCode or res.status_code or res.Status)
+        if c == 200 then
+            local successDec, decoded = pcall(function()
+                return HS:JSONDecode(res.Body or res.body)
+            end)
+            if successDec and decoded then
+                if decoded.success then
+                    return true, "Linked", decoded.expires or decoded.expires_at or decoded.expiry
+                else
+                    return false, decoded.message or "Invalid key"
+                end
+            end
+        end
+        if c == 403 then
+            return false, "Key bound to another device or clone limit reached"
+        end
+        if c == 401 then
+            return false, "That key is invalid or revoked"
+        end
+        return false, "Server Error: " .. tostring(c)
+    else
+        local ok, res = pcall(function()
+            return game:HttpGet(url)
+        end)
+        if ok and res then
+            local successDec, decoded = pcall(function()
+                return HS:JSONDecode(res)
+            end)
+            if successDec and decoded then
+                if decoded.success then
+                    return true, "Linked", decoded.expires or decoded.expires_at or decoded.expiry
+                else
+                    return false, decoded.message or "Invalid key"
+                end
+            end
+        end
+        return false, "Failed to connect to authentication server"
+    end
+end
 
 function dsui:CreateWindow(Config)
     Config = Config or {}
@@ -105,11 +256,13 @@ function dsui:CreateWindow(Config)
     return Window
 end
 
-function dsui:AddDefaultTabs(Window, Options)
+function dsui:SetupKeySystem(Window, Options)
     Options = Options or {}
-    local rawKey = Options.Key or _G.DaveStudioKey or _G.DAVESTUDIO_API_KEY or "davestudio.SAMPLE_KEY_12345"
-    local expiresText = Options.Expires or "28 Days"
+    local gameName = Options.GameName or "Steal an Egg"
     local DiscordLink = Options.DiscordLink or "discord.gg/nMkMhEQmBm"
+    local onLoadTabs = Options.OnLoadTabs
+
+    dsui.LoadKey()
 
     local lp = game:GetService("Players").LocalPlayer
     local startTime = os.time()
@@ -129,16 +282,10 @@ function dsui:AddDefaultTabs(Window, Options)
         end
     end)
 
-    local hwidStr = "N/A"
-    pcall(function()
-        if gethwid then hwidStr = gethwid()
-        elseif get_hwid then hwidStr = get_hwid()
-        elseif syn and syn.get_device_id then hwidStr = syn.get_device_id()
-        elseif getgenv and getgenv().gethwid then hwidStr = getgenv().gethwid()
-        end
-    end)
-    if #hwidStr > 16 then
-        hwidStr = string.sub(hwidStr, 1, 14) .. "..."
+    local hwidStr = dsui.GetHWID()
+    local displayHwid = hwidStr
+    if #displayHwid > 16 then
+        displayHwid = string.sub(displayHwid, 1, 14) .. "..."
     end
 
     local function getDetailsText(sessionStr)
@@ -156,7 +303,7 @@ function dsui:AddDefaultTabs(Window, Options)
             ageStr,
             isPrem,
             execName,
-            hwidStr,
+            displayHwid,
             sessionStr
         )
     end
@@ -200,49 +347,165 @@ function dsui:AddDefaultTabs(Window, Options)
         end
     end)
 
-    local KeyInfoSection = AccountTab:Section({
-        Title = "Key Info",
-        Opened = false
+    local KeySystemSection = AccountTab:Section({
+        Title = "Key System",
+        Opened = true
     })
 
-    local maskedKey = string.rep("•", #rawKey > 0 and math.min(#rawKey, 20) or 16)
-    local isRevealed = false
-    local keyStatusCard
+    local statusCard = KeySystemSection:Paragraph({
+        Title = "License Status",
+        Desc = "<font color=\"#d1d5db\">Status:</font>  <font color=\"#FFE082\"><b>Initializing...</b></font>\n<font color=\"#d1d5db\">Expires:</font>  <font color=\"#94a3b8\">Checking...</font>",
+        Image = "key",
+        ImageSize = 24
+    })
 
-    local function getKeyCardDesc()
-        local currentKey = isRevealed and rawKey or maskedKey
-        return "<font color=\"#d1d5db\">Expires:</font>  <font color=\"#00C864\"><b>" .. expiresText .. "</b></font>\n<font color=\"#d1d5db\">Key:</font>  <font color=\"#ffffff\"><b>" .. currentKey .. "</b></font>"
+    local enteredKeyBuffer = dsui.API_KEY or ""
+
+    local keyInputField = KeySystemSection:Input({
+        Title = "License Key",
+        Desc = "Enter your license key to unlock features",
+        Placeholder = "davestudio.xxxx",
+        Default = dsui.API_KEY or "",
+        Callback = function(val)
+            enteredKeyBuffer = tostring(val or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        end
+    })
+
+    local tabsLoaded = false
+    local verifyButton
+
+    local function trigger_load_tabs()
+        if tabsLoaded then return end
+        local currentKey = dsui.API_KEY
+        if not currentKey or currentKey == "" then
+            pcall(function()
+                if statusCard and statusCard.SetDesc then
+                    statusCard:SetDesc("<font color=\"#d1d5db\">Status:</font>  <font color=\"#FFB74D\"><b>Waiting for key...</b></font>\n<font color=\"#d1d5db\">Expires:</font>  <font color=\"#94a3b8\">No key provided</font>")
+                end
+            end)
+            return
+        end
+
+        pcall(function()
+            if statusCard and statusCard.SetDesc then
+                statusCard:SetDesc("<font color=\"#d1d5db\">Status:</font>  <font color=\"#81D4FA\"><b>Verifying with server...</b></font>\n<font color=\"#d1d5db\">Expires:</font>  <font color=\"#94a3b8\">Checking...</font>")
+            end
+        end)
+
+        task.spawn(function()
+            local is_valid, key_status, expires = dsui.VerifyKey(currentKey)
+            if not is_valid then
+                pcall(function()
+                    if statusCard and statusCard.SetDesc then
+                        statusCard:SetDesc("<font color=\"#d1d5db\">Status:</font>  <font color=\"#FF8A80\"><b>" .. tostring(key_status or "Invalid") .. "</b></font>\n<font color=\"#d1d5db\">Expires:</font>  <font color=\"#94a3b8\">Unknown</font>")
+                    end
+                end)
+                return
+            end
+
+            tabsLoaded = true
+            local expiresText = "Never"
+            if type(expires) == "number" then
+                local secondsLeft = expires - os.time()
+                if secondsLeft <= 0 then
+                    expiresText = "Expired"
+                else
+                    local days = math.floor(secondsLeft / 86400)
+                    if days >= 1 then
+                        expiresText = tostring(days) .. " Day" .. (days > 1 and "s" or "")
+                    else
+                        local hours = math.floor(secondsLeft / 3600)
+                        expiresText = tostring(hours) .. " Hour" .. (hours > 1 and "s" or "")
+                    end
+                end
+            elseif type(expires) == "string" then
+                expiresText = expires
+            end
+
+            local maskedKey = string.rep("•", #currentKey > 0 and math.min(#currentKey, 20) or 16)
+            local isRevealed = false
+
+            local function updateActiveKeyDesc()
+                local displayed = isRevealed and currentKey or maskedKey
+                return "<font color=\"#d1d5db\">Status:</font>  <font color=\"#00C864\"><b>● Linked</b></font>\n" ..
+                    "<font color=\"#d1d5db\">Expires:</font>  <font color=\"#00C864\"><b>" .. expiresText .. "</b></font>\n" ..
+                    "<font color=\"#d1d5db\">Key:</font>  <font color=\"#ffffff\"><b>" .. displayed .. "</b></font>"
+            end
+
+            pcall(function()
+                if statusCard and statusCard.SetDesc then
+                    statusCard:SetDesc(updateActiveKeyDesc())
+                end
+                if statusCard and statusCard.SetButtons then
+                    statusCard:SetButtons({
+                        {
+                            Title = "Show / Hide",
+                            Icon = "eye",
+                            Variant = "Secondary",
+                            Callback = function()
+                                isRevealed = not isRevealed
+                                statusCard:SetDesc(updateActiveKeyDesc())
+                            end
+                        },
+                        {
+                            Title = "Copy Key",
+                            Icon = "copy",
+                            Variant = "Secondary",
+                            Callback = function()
+                                if setclipboard then
+                                    setclipboard(currentKey)
+                                    WindUI:Notify({ Title = "Copied", Content = "License key copied to clipboard", Duration = 2 })
+                                end
+                            end
+                        }
+                    })
+                end
+            end)
+
+            WindUI:Notify({
+                Title = "Access Granted",
+                Content = "Welcome to " .. gameName .. "!",
+                Duration = 3
+            })
+
+            if onLoadTabs and type(onLoadTabs) == "function" then
+                task.spawn(function()
+                    pcall(onLoadTabs)
+                end)
+            end
+        end)
     end
 
-    keyStatusCard = KeyInfoSection:Paragraph({
-        Title = "Subscription License",
-        Desc = getKeyCardDesc(),
-        Image = "key",
-        ImageSize = 24,
-        Buttons = {
-            {
-                Title = "Show / Hide",
-                Icon = "eye",
-                Variant = "Secondary",
-                Callback = function()
-                    isRevealed = not isRevealed
-                    if keyStatusCard and keyStatusCard.SetDesc then
-                        keyStatusCard:SetDesc(getKeyCardDesc())
-                    end
+    verifyButton = KeySystemSection:Button({
+        Title = "Verify & Save Key",
+        Desc = "Authenticate key and unlock all game tabs",
+        Icon = "check-circle",
+        Callback = function()
+            local value = tostring(enteredKeyBuffer or ""):gsub("^%s+", ""):gsub("%s+$", "")
+            if value == "" then
+                WindUI:Notify({ Title = "Error", Content = "Key cannot be empty", Duration = 2 })
+                return
+            end
+            pcall(function()
+                if statusCard and statusCard.SetDesc then
+                    statusCard:SetDesc("<font color=\"#d1d5db\">Status:</font>  <font color=\"#81D4FA\"><b>Verifying...</b></font>\n<font color=\"#d1d5db\">Expires:</font>  <font color=\"#94a3b8\">Checking...</font>")
                 end
-            },
-            {
-                Title = "Copy Key",
-                Icon = "copy",
-                Variant = "Secondary",
-                Callback = function()
-                    if setclipboard then
-                        setclipboard(rawKey)
-                        WindUI:Notify({ Title = "Copied", Content = "License key copied to clipboard", Duration = 2 })
-                    end
+            end)
+            task.spawn(function()
+                local is_valid, key_status, expires = dsui.VerifyKey(value)
+                if is_valid then
+                    dsui.SaveKey(value)
+                    trigger_load_tabs()
+                else
+                    pcall(function()
+                        if statusCard and statusCard.SetDesc then
+                            statusCard:SetDesc("<font color=\"#d1d5db\">Status:</font>  <font color=\"#FF8A80\"><b>" .. tostring(key_status or "Invalid key") .. "</b></font>\n<font color=\"#d1d5db\">Expires:</font>  <font color=\"#94a3b8\">Unknown</font>")
+                        end
+                    end)
+                    WindUI:Notify({ Title = "Authentication Failed", Content = tostring(key_status or "Invalid Key"), Duration = 3 })
                 end
-            }
-        }
+            end)
+        end
     })
 
     local SettingsTab = Window:Tab({
@@ -300,6 +563,8 @@ function dsui:AddDefaultTabs(Window, Options)
             AccountTab:Select()
         end
     end)
+
+    trigger_load_tabs()
 
     return {
         AccountTab = AccountTab,
