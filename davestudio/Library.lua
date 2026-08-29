@@ -267,7 +267,7 @@ local Library = {
         MainColor = Color3.fromRGB(25, 25, 25),
         AccentColor = Color3.fromRGB(125, 85, 255),
         OutlineColor = Color3.fromRGB(40, 40, 40),
-        FontColor = Color3.new(1, 1, 1),
+        FontColor = Color3.fromRGB(245, 248, 255),
         Font = Font.fromEnum(Enum.Font.RobotoMono),
 
         RedColor = Color3.fromRGB(255, 50, 50),
@@ -5217,7 +5217,7 @@ do
             Size = UDim2.new(1, -26, 1, 0),
             Text = Toggle.Text,
             TextSize = 16,
-            TextTransparency = 0.4,
+            TextTransparency = 0.15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Button,
         })
@@ -5281,7 +5281,7 @@ do
             end
 
             TweenService:Create(Label, Library.TweenInfo, {
-                TextTransparency = Toggle.Value and 0 or 0.4,
+                TextTransparency = Toggle.Value and 0 or 0.15,
             }):Play()
             TweenService:Create(CheckImage, Library.TweenInfo, {
                 ImageTransparency = Toggle.Value and 0 or 1,
@@ -5552,7 +5552,7 @@ do
             end
 
             TweenService:Create(Label, Library.TweenInfo, {
-                TextTransparency = Toggle.Value and 0 or 0.4,
+                TextTransparency = Toggle.Value and 0 or 0.15,
             }):Play()
             TweenService:Create(Ball, Library.TweenInfo, {
                 AnchorPoint = Vector2.new(Offset, 0),
@@ -10293,11 +10293,11 @@ function Library:CreateWindow(WindowInfo)
             end
 
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = Hovering and 0.25 or 0.5,
+                TextTransparency = Hovering and 0.15 or 0.35,
             }):Play()
             if TabIcon then
                 TweenService:Create(TabIcon, Library.TweenInfo, {
-                    ImageTransparency = Hovering and 0.25 or 0.5,
+                    ImageTransparency = Hovering and 0.15 or 0.35,
                 }):Play()
             end
         end
@@ -10343,12 +10343,12 @@ function Library:CreateWindow(WindowInfo)
             }):Play()
 
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = 0.5,
+                TextTransparency = 0.35,
             }):Play()
 
             if TabIcon then
                 TweenService:Create(TabIcon, Library.TweenInfo, {
-                    ImageTransparency = 0.5,
+                    ImageTransparency = 0.35,
                 }):Play()
             end
 
