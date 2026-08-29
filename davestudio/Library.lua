@@ -10330,21 +10330,6 @@ function Library:CreateWindow(WindowInfo)
             Library:PlayTabAnimation(TabCanvas, true)
             Tab:RefreshSides()
 
-            for _, Groupbox in pairs(Tab.Groupboxes or {}) do
-                if Groupbox and Groupbox.Resize then
-                    Groupbox:Resize()
-                end
-            end
-            for _, Tabbox in pairs(Tab.Tabboxes or {}) do
-                if Tabbox and Tabbox.Tabs then
-                    for _, t in pairs(Tabbox.Tabs) do
-                        if t and t.Resize then
-                            t:Resize()
-                        end
-                    end
-                end
-            end
-
             Library.ActiveTab = Tab
 
             if Library.Searching then
