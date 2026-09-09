@@ -534,6 +534,7 @@ local Templates = {
         AllowRightClickInput = true
     },
     Dropdown = {
+        Icon = "🌱",
         Values = {},
         DisabledValues = {},
         ValueImages = {},
@@ -7991,491 +7992,377 @@ do
         return Slider
     end
 
-    local DropdownModal = {
+    local WindowDropdownModal = {
         Initialized = false,
-        Backdrop = nil,
-        Card = nil,
-        CardScale = nil,
+        Overlay = nil,
         Title = nil,
-        CloseBtn = nil,
+        Icon = nil,
+        DoneBtn = nil,
         SearchInput = nil,
-        ListFrame = nil,
+        ScrollFrame = nil,
         ActiveDropdown = nil,
         IsOpen = false,
         Pool = {},
-        ActiveEntries = {},
-        ActiveItemsList = {},
-        ActiveMultiMap = {},
-        ActiveSingleVal = nil,
+        ActiveFiltered = {},
+        ItemHeight = 36,
     }
 
-    local function ApplyModalItemStyle(button, label, checkImg, isSelected)
-        if isSelected then
-            button.BackgroundColor3 = Color3.fromRGB(36, 40, 58)
-            button.BackgroundTransparency = 0
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
-            label.Font = Enum.Font.GothamBold
-            if checkImg then
-                checkImg.Visible = true
-            end
-        else
-            button.BackgroundColor3 = Color3.fromRGB(24, 27, 36)
-            button.BackgroundTransparency = 1
-            label.TextColor3 = Color3.fromRGB(150, 156, 175)
-            label.Font = Enum.Font.Gotham
-            if checkImg then
-                checkImg.Visible = false
-            end
+    local function CloseWindowDropdownModal()
+        if WindowDropdownModal.ActiveDropdown and WindowDropdownModal.ActiveDropdown.ArrowImage then
+            WindowDropdownModal.ActiveDropdown.ArrowImage.Rotation = 0
+            WindowDropdownModal.ActiveDropdown.ArrowImage.ImageTransparency = 0.5
         end
+        if WindowDropdownModal.Overlay then
+            WindowDropdownModal.Overlay.Visible = false
+        end
+        WindowDropdownModal.ActiveDropdown = nil
+        WindowDropdownModal.IsOpen = false
     end
 
-    local function CloseDropdownModal()
-        if not DropdownModal.IsOpen then
-            return
-        end
-        DropdownModal.IsOpen = false
-
-        local t1 = TweenService:Create(DropdownModal.Backdrop, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            BackgroundTransparency = 1,
-        })
-        local t2 = TweenService:Create(DropdownModal.CardScale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Scale = 0.95,
-        })
-        t1:Play()
-        t2:Play()
-        t1.Completed:Connect(function()
-            if not DropdownModal.IsOpen then
-                DropdownModal.Backdrop.Visible = false
-                DropdownModal.ActiveDropdown = nil
+    local function UpdateWindowModalRowStyles()
+        local dd = WindowDropdownModal.ActiveDropdown
+        for _, pEntry in ipairs(WindowDropdownModal.Pool) do
+            if pEntry.Button.Visible and pEntry.Value then
+                local isSel = false
+                if dd and dd.Multi and type(dd.Value) == "table" then
+                    isSel = dd.Value[pEntry.Value] == true
+                elseif dd then
+                    isSel = dd.Value == pEntry.Value
+                end
+                if isSel then
+                    pEntry.Button.BackgroundTransparency = 0
+                    pEntry.Button.BackgroundColor3 = Color3.fromRGB(36, 40, 58)
+                    pEntry.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    pEntry.Label.Font = Enum.Font.GothamBold
+                    pEntry.Check.Visible = true
+                else
+                    pEntry.Button.BackgroundTransparency = 1
+                    pEntry.Label.TextColor3 = Color3.fromRGB(180, 186, 205)
+                    pEntry.Label.Font = Enum.Font.Gotham
+                    pEntry.Check.Visible = false
+                end
             end
-        end)
+        end
     end
 
     local function GetOrCreateModalRow(index)
-        if DropdownModal.Pool[index] then
-            return DropdownModal.Pool[index]
+        if WindowDropdownModal.Pool[index] then
+            return WindowDropdownModal.Pool[index]
         end
 
-        local Row = Instance.new("TextButton")
-        Row.Size = UDim2.new(1, 0, 0, 34)
-        Row.AutoButtonColor = false
-        Row.Text = ""
-        Row.ZIndex = 99993
-        Row.Parent = DropdownModal.ListFrame
+        local row = Instance.new("TextButton")
+        row.Size = UDim2.new(1, 0, 0, 32)
+        row.Position = UDim2.fromOffset(0, (index - 1) * WindowDropdownModal.ItemHeight)
+        row.BackgroundColor3 = Color3.fromRGB(24, 27, 36)
+        row.BackgroundTransparency = 1
+        row.AutoButtonColor = false
+        row.Text = ""
+        row.ZIndex = 504
+        row.Parent = WindowDropdownModal.ScrollFrame
 
-        local RowCorner = Instance.new("UICorner")
-        RowCorner.CornerRadius = UDim.new(0, 6)
-        RowCorner.Parent = Row
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = row
 
-        local RowLabel = Instance.new("TextLabel")
-        RowLabel.Size = UDim2.new(1, -44, 1, 0)
-        RowLabel.Position = UDim2.fromOffset(14, 0)
-        RowLabel.BackgroundTransparency = 1
-        RowLabel.Text = ""
-        RowLabel.TextSize = 13
-        RowLabel.TextXAlignment = Enum.TextXAlignment.Left
-        RowLabel.ZIndex = 99994
-        RowLabel.Parent = Row
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -40, 1, 0)
+        label.Position = UDim2.fromOffset(10, 0)
+        label.BackgroundTransparency = 1
+        label.TextSize = 13
+        label.TextColor3 = Color3.fromRGB(180, 186, 205)
+        label.Font = Enum.Font.Gotham
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = 505
+        label.Parent = row
 
-        local CheckIcon = Instance.new("ImageLabel")
-        CheckIcon.Size = UDim2.fromOffset(16, 16)
-        CheckIcon.AnchorPoint = Vector2.new(1, 0.5)
-        CheckIcon.Position = UDim2.new(1, -12, 0.5, 0)
-        CheckIcon.BackgroundTransparency = 1
-        CheckIcon.ImageColor3 = Color3.fromRGB(125, 85, 255)
-        CheckIcon.Visible = false
-        CheckIcon.ZIndex = 99994
-        CheckIcon.Parent = Row
+        local check = Instance.new("ImageLabel")
+        check.Size = UDim2.fromOffset(16, 16)
+        check.AnchorPoint = Vector2.new(1, 0.5)
+        check.Position = UDim2.new(1, -10, 0.5, 0)
+        check.BackgroundTransparency = 1
+        check.Image = "rbxassetid://10709790644"
+        check.ImageColor3 = Color3.fromRGB(0, 200, 100)
+        check.Visible = false
+        check.ZIndex = 505
+        check.Parent = row
 
-        local checkData = nil
-        pcall(function()
-            if Library and Library.GetIcon then
-                checkData = Library:GetIcon("check")
-            end
-        end)
-        if checkData and Library and Library.ApplyLucideIcon then
-            Library:ApplyLucideIcon(CheckIcon, checkData)
-        else
-            CheckIcon.Image = "rbxassetid://10709790644"
-        end
-
-        local itemData = {
-            button = Row,
-            label = RowLabel,
-            check = CheckIcon,
-            valKey = nil,
-            lowerStr = "",
-            isSelected = false,
+        local entry = {
+            Button = row,
+            Label = label,
+            Check = check,
+            Value = nil,
         }
 
-        Row.MouseEnter:Connect(function()
-            if not itemData.isSelected then
-                Row.BackgroundTransparency = 0.5
-            end
-        end)
-
-        Row.MouseLeave:Connect(function()
-            if not itemData.isSelected then
-                Row.BackgroundTransparency = 1
-            end
-        end)
-
-        Row.MouseButton1Click:Connect(function()
-            local dd = DropdownModal.ActiveDropdown
-            if not dd or not itemData.valKey then
-                return
-            end
-            local vk = itemData.valKey
-
-            if dd.Multi then
-                DropdownModal.ActiveMultiMap[vk] = not DropdownModal.ActiveMultiMap[vk]
-                itemData.isSelected = DropdownModal.ActiveMultiMap[vk] == true
-                ApplyModalItemStyle(Row, RowLabel, CheckIcon, itemData.isSelected)
-
-                local cloneMap = {}
-                for k, isSel in pairs(DropdownModal.ActiveMultiMap) do
-                    if isSel then
-                        cloneMap[k] = true
-                    end
-                end
-                dd:SetValue(cloneMap)
+        row.MouseEnter:Connect(function()
+            local dd = WindowDropdownModal.ActiveDropdown
+            if not dd then return end
+            local isSel = false
+            if dd.Multi and type(dd.Value) == "table" then
+                isSel = dd.Value[entry.Value] == true
             else
-                DropdownModal.ActiveSingleVal = vk
-                for _, entry in ipairs(DropdownModal.ActiveEntries) do
-                    local sel = (entry.valKey == vk)
-                    entry.isSelected = sel
-                    ApplyModalItemStyle(entry.button, entry.label, entry.check, sel)
-                end
-                dd:SetValue(vk)
-                task.wait(0.1)
-                CloseDropdownModal()
+                isSel = dd.Value == entry.Value
+            end
+            if not isSel then
+                row.BackgroundTransparency = 0.6
+                row.BackgroundColor3 = Color3.fromRGB(30, 34, 48)
             end
         end)
 
-        DropdownModal.Pool[index] = itemData
-        return itemData
-    end
-
-    local function UpdateDropdownModalSize()
-        local cam = workspace.CurrentCamera
-        local vp = cam and cam.ViewportSize or Vector2.new(1920, 1080)
-        local targetWidth = math.clamp(vp.X - 32, 280, 430)
-        local itemCount = #DropdownModal.ActiveItemsList
-        local contentHeight = 106 + (itemCount * 38)
-        local maxHeight = math.clamp(vp.Y - 60, 200, 390)
-        local targetHeight = math.clamp(contentHeight, 160, maxHeight)
-
-        DropdownModal.Card.Size = UDim2.fromOffset(targetWidth, targetHeight)
-        DropdownModal.ListFrame.Size = UDim2.new(1, -28, 1, -96)
-    end
-
-    local function ApplyModalFastSearchFilter()
-        local filterText = string.lower(DropdownModal.SearchInput.Text or "")
-        for _, entry in ipairs(DropdownModal.ActiveEntries) do
-            if filterText == "" or string.find(entry.lowerStr, filterText, 1, true) ~= nil then
-                entry.button.Visible = true
+        row.MouseLeave:Connect(function()
+            local dd = WindowDropdownModal.ActiveDropdown
+            if not dd then return end
+            local isSel = false
+            if dd.Multi and type(dd.Value) == "table" then
+                isSel = dd.Value[entry.Value] == true
             else
-                entry.button.Visible = false
+                isSel = dd.Value == entry.Value
             end
-        end
-    end
-
-    local function InitDropdownModalUI()
-        if DropdownModal.Initialized and DropdownModal.Backdrop and DropdownModal.Backdrop.Parent then
-            return
-        end
-
-        local modalParent = Overlay or (Library and (Library.Overlay or Library.ScreenGui))
-        if not modalParent then
-            local lp = game:GetService("Players").LocalPlayer
-            modalParent = lp and lp:FindFirstChild("PlayerGui")
-        end
-        if not modalParent then
-            return
-        end
-
-        DropdownModal.Initialized = true
-
-        local Backdrop = Instance.new("TextButton")
-        Backdrop.Name = "DaveStudio_DropdownModalBackdrop"
-        Backdrop.Size = UDim2.fromScale(1, 1)
-        Backdrop.Position = UDim2.fromScale(0, 0)
-        Backdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Backdrop.BackgroundTransparency = 1
-        Backdrop.Text = ""
-        Backdrop.AutoButtonColor = false
-        Backdrop.Visible = false
-        Backdrop.ZIndex = 99990
-        Backdrop.Parent = modalParent
-
-        local Card = Instance.new("Frame")
-        Card.Name = "ModalCard"
-        Card.Size = UDim2.fromOffset(430, 390)
-        Card.AnchorPoint = Vector2.new(0.5, 0.5)
-        Card.Position = UDim2.fromScale(0.5, 0.5)
-        Card.BackgroundColor3 = Color3.fromRGB(18, 20, 27)
-        Card.BorderSizePixel = 0
-        Card.ZIndex = 99991
-        Card.Parent = Backdrop
-
-        local CardScale = Instance.new("UIScale")
-        CardScale.Scale = 0.95
-        CardScale.Parent = Card
-
-        local ModalCorner = Instance.new("UICorner")
-        ModalCorner.CornerRadius = UDim.new(0, 10)
-        ModalCorner.Parent = Card
-
-        local CardStroke = Instance.new("UIStroke")
-        CardStroke.Color = Color3.fromRGB(44, 48, 64)
-        CardStroke.Thickness = 1
-        CardStroke.Parent = Card
-
-        local Header = Instance.new("Frame")
-        Header.Size = UDim2.new(1, 0, 0, 48)
-        Header.BackgroundTransparency = 1
-        Header.ZIndex = 99992
-        Header.Parent = Card
-
-        local Title = Instance.new("TextLabel")
-        Title.Size = UDim2.new(1, -90, 1, 0)
-        Title.Position = UDim2.fromOffset(16, 0)
-        Title.BackgroundTransparency = 1
-        Title.Text = "Select"
-        Title.TextColor3 = Color3.fromRGB(245, 248, 255)
-        Title.TextSize = 14
-        Title.Font = Enum.Font.GothamBold
-        Title.TextXAlignment = Enum.TextXAlignment.Left
-        Title.ZIndex = 99993
-        Title.Parent = Header
-
-        local CloseBtn = Instance.new("TextButton")
-        CloseBtn.Size = UDim2.fromOffset(64, 26)
-        CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
-        CloseBtn.Position = UDim2.new(1, -14, 0.5, 0)
-        CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 33, 45)
-        CloseBtn.AutoButtonColor = false
-        CloseBtn.Text = "Close"
-        CloseBtn.TextColor3 = Color3.fromRGB(200, 205, 225)
-        CloseBtn.TextSize = 12
-        CloseBtn.Font = Enum.Font.GothamMedium
-        CloseBtn.ZIndex = 99993
-        CloseBtn.Parent = Header
-
-        local CloseCorner = Instance.new("UICorner")
-        CloseCorner.CornerRadius = UDim.new(0, 6)
-        CloseCorner.Parent = CloseBtn
-
-        local CloseStroke = Instance.new("UIStroke")
-        CloseStroke.Color = Color3.fromRGB(45, 49, 65)
-        CloseStroke.Thickness = 1
-        CloseStroke.Parent = CloseBtn
-
-        local SearchContainer = Instance.new("Frame")
-        SearchContainer.Size = UDim2.new(1, -28, 0, 34)
-        SearchContainer.Position = UDim2.fromOffset(14, 50)
-        SearchContainer.BackgroundColor3 = Color3.fromRGB(25, 28, 38)
-        SearchContainer.ZIndex = 99992
-        SearchContainer.Parent = Card
-
-        local SearchCorner = Instance.new("UICorner")
-        SearchCorner.CornerRadius = UDim.new(0, 6)
-        SearchCorner.Parent = SearchContainer
-
-        local SearchStroke = Instance.new("UIStroke")
-        SearchStroke.Color = Color3.fromRGB(42, 46, 62)
-        SearchStroke.Thickness = 1
-        SearchStroke.Parent = SearchContainer
-
-        local SearchIcon = Instance.new("ImageLabel")
-        SearchIcon.Size = UDim2.fromOffset(16, 16)
-        SearchIcon.AnchorPoint = Vector2.new(0, 0.5)
-        SearchIcon.Position = UDim2.new(0, 10, 0.5, 0)
-        SearchIcon.BackgroundTransparency = 1
-        SearchIcon.ImageColor3 = Color3.fromRGB(130, 136, 155)
-        SearchIcon.ZIndex = 99993
-        SearchIcon.Parent = SearchContainer
-
-        local searchIconData = nil
-        pcall(function()
-            if Library and Library.GetIcon then
-                searchIconData = Library:GetIcon("search")
-            end
-            if not searchIconData and Library and Library.GetCustomIcon then
-                searchIconData = Library:GetCustomIcon("search")
+            if not isSel then
+                row.BackgroundTransparency = 1
             end
         end)
-        if searchIconData and Library and Library.ApplyLucideIcon then
-            Library:ApplyLucideIcon(SearchIcon, searchIconData)
-        end
-        if SearchIcon.Image == "" then
-            SearchIcon.Image = "rbxassetid://10709798085"
-        end
 
-        local SearchInput = Instance.new("TextBox")
-        SearchInput.Size = UDim2.new(1, -40, 1, 0)
-        SearchInput.Position = UDim2.fromOffset(34, 0)
-        SearchInput.BackgroundTransparency = 1
-        SearchInput.PlaceholderText = "Search items..."
-        SearchInput.PlaceholderColor3 = Color3.fromRGB(115, 122, 140)
-        SearchInput.Text = ""
-        SearchInput.TextColor3 = Color3.fromRGB(245, 248, 255)
-        SearchInput.TextSize = 13
-        SearchInput.Font = Enum.Font.Gotham
-        SearchInput.TextXAlignment = Enum.TextXAlignment.Left
-        SearchInput.ClearTextOnFocus = false
-        SearchInput.ZIndex = 99993
-        SearchInput.Parent = SearchContainer
-
-        local ListFrame = Instance.new("ScrollingFrame")
-        ListFrame.Size = UDim2.new(1, -28, 1, -96)
-        ListFrame.Position = UDim2.fromOffset(14, 90)
-        ListFrame.BackgroundTransparency = 1
-        ListFrame.BorderSizePixel = 0
-        ListFrame.ScrollBarThickness = 3
-        ListFrame.ScrollBarImageColor3 = Color3.fromRGB(60, 66, 88)
-        ListFrame.CanvasSize = UDim2.fromScale(0, 0)
-        ListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        ListFrame.ZIndex = 99992
-        ListFrame.Parent = Card
-
-        local ListLayout = Instance.new("UIListLayout")
-        ListLayout.Padding = UDim.new(0, 4)
-        ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ListLayout.Parent = ListFrame
-
-        local ListPad = Instance.new("UIPadding")
-        ListPad.PaddingTop = UDim.new(0, 2)
-        ListPad.PaddingBottom = UDim.new(0, 6)
-        ListPad.PaddingRight = UDim.new(0, 4)
-        ListPad.Parent = ListFrame
-
-        Backdrop.MouseButton1Click:Connect(function()
-            CloseDropdownModal()
-        end)
-
-        CloseBtn.MouseButton1Click:Connect(function()
-            CloseDropdownModal()
-        end)
-
-        CloseBtn.MouseEnter:Connect(function()
-            TweenService:Create(CloseBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(42, 47, 65) }):Play()
-        end)
-
-        CloseBtn.MouseLeave:Connect(function()
-            TweenService:Create(CloseBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(30, 33, 45) }):Play()
-        end)
-
-        SearchInput:GetPropertyChangedSignal("Text"):Connect(ApplyModalFastSearchFilter)
-
-        if workspace.CurrentCamera then
-            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-                if DropdownModal.IsOpen then
-                    UpdateDropdownModalSize()
+        row.MouseButton1Click:Connect(function()
+            local dd = WindowDropdownModal.ActiveDropdown
+            if not dd or not entry.Value then return end
+            if dd.Multi and type(dd.Value) == "table" then
+                local cur = dd.Value[entry.Value] == true
+                local newMap = {}
+                for k, v in pairs(dd.Value) do
+                    newMap[k] = v
                 end
-            end)
-        end
-
-        DropdownModal.Backdrop = Backdrop
-        DropdownModal.Card = Card
-        DropdownModal.CardScale = CardScale
-        DropdownModal.Title = Title
-        DropdownModal.CloseBtn = CloseBtn
-        DropdownModal.SearchInput = SearchInput
-        DropdownModal.ListFrame = ListFrame
-    end
-
-    local function ShowDropdownModal(dropdown)
-        if not dropdown then
-            return
-        end
-        InitDropdownModalUI()
-        if not DropdownModal.Backdrop then
-            return
-        end
-
-        if DropdownModal.IsOpen and DropdownModal.ActiveDropdown == dropdown then
-            CloseDropdownModal()
-            return
-        end
-
-        DropdownModal.ActiveDropdown = dropdown
-        DropdownModal.IsOpen = true
-
-        DropdownModal.Title.Text = dropdown.Text or "Select Options"
-
-        local rawItems = {}
-        if type(dropdown.Values) == "table" then
-            local isArray = #dropdown.Values > 0
-            if isArray then
-                for _, v in ipairs(dropdown.Values) do
-                    table.insert(rawItems, v)
-                end
+                newMap[entry.Value] = not cur
+                dd:SetValue(newMap)
             else
-                for k, _ in pairs(dropdown.Values) do
-                    table.insert(rawItems, k)
-                end
+                dd:SetValue(entry.Value)
+                CloseWindowDropdownModal()
+            end
+            UpdateWindowModalRowStyles()
+        end)
+
+        WindowDropdownModal.Pool[index] = entry
+        return entry
+    end
+
+    local function RefreshWindowModalList()
+        local dd = WindowDropdownModal.ActiveDropdown
+        if not dd then return end
+        local query = WindowDropdownModal.SearchInput.Text:lower()
+        WindowDropdownModal.ActiveFiltered = {}
+        local rawVals = dd.Values or {}
+        local isSeq = true
+        for k, _ in pairs(rawVals) do
+            if type(k) ~= "number" then
+                isSeq = false
+                break
             end
         end
-        DropdownModal.ActiveItemsList = rawItems
-
-        DropdownModal.ActiveMultiMap = {}
-        DropdownModal.ActiveSingleVal = nil
-
-        if dropdown.Multi then
-            if type(dropdown.Value) == "table" then
-                for k, v in pairs(dropdown.Value) do
-                    if v == true then
-                        DropdownModal.ActiveMultiMap[k] = true
-                    end
+        if isSeq then
+            for _, v in ipairs(rawVals) do
+                local str = tostring(v)
+                if query == "" or str:lower():find(query, 1, true) then
+                    table.insert(WindowDropdownModal.ActiveFiltered, v)
                 end
             end
         else
-            DropdownModal.ActiveSingleVal = dropdown.Value
-        end
-
-        DropdownModal.ActiveEntries = {}
-        for i, valKey in ipairs(rawItems) do
-            local entry = GetOrCreateModalRow(i)
-            entry.valKey = valKey
-            entry.lowerStr = string.lower(tostring(valKey))
-            entry.label.Text = tostring(valKey)
-            entry.button.LayoutOrder = i
-            entry.button.Visible = true
-
-            local isSel = false
-            if dropdown.Multi then
-                isSel = (DropdownModal.ActiveMultiMap[valKey] == true)
-            else
-                isSel = (DropdownModal.ActiveSingleVal == valKey)
+            for k, _ in pairs(rawVals) do
+                local str = tostring(k)
+                if query == "" or str:lower():find(query, 1, true) then
+                    table.insert(WindowDropdownModal.ActiveFiltered, k)
+                end
             end
-            entry.isSelected = isSel
-            ApplyModalItemStyle(entry.button, entry.label, entry.check, isSel)
-            table.insert(DropdownModal.ActiveEntries, entry)
+            table.sort(WindowDropdownModal.ActiveFiltered)
         end
 
-        for j = #rawItems + 1, #DropdownModal.Pool do
-            DropdownModal.Pool[j].button.Visible = false
+        WindowDropdownModal.ScrollFrame.CanvasSize = UDim2.fromOffset(0, #WindowDropdownModal.ActiveFiltered * WindowDropdownModal.ItemHeight)
+
+        for i = 1, #WindowDropdownModal.ActiveFiltered do
+            local val = WindowDropdownModal.ActiveFiltered[i]
+            local rowEntry = GetOrCreateModalRow(i)
+            rowEntry.Value = val
+            rowEntry.Label.Text = tostring(val)
+            rowEntry.Button.Position = UDim2.fromOffset(0, (i - 1) * WindowDropdownModal.ItemHeight)
+            rowEntry.Button.Visible = true
         end
 
-        UpdateDropdownModalSize()
+        for i = #WindowDropdownModal.ActiveFiltered + 1, #WindowDropdownModal.Pool do
+            WindowDropdownModal.Pool[i].Button.Visible = false
+            WindowDropdownModal.Pool[i].Value = nil
+        end
 
-        DropdownModal.SearchInput.Text = ""
-        ApplyModalFastSearchFilter()
-        DropdownModal.ListFrame.CanvasPosition = Vector2.new(0, 0)
-
-        DropdownModal.Backdrop.Visible = true
-        DropdownModal.CardScale.Scale = 0.95
-        DropdownModal.Backdrop.BackgroundTransparency = 1
-
-        TweenService:Create(DropdownModal.Backdrop, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundTransparency = 0.5,
-        }):Play()
-
-        TweenService:Create(DropdownModal.CardScale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Scale = 1,
-        }):Play()
+        UpdateWindowModalRowStyles()
     end
+
+    local function EnsureWindowDropdownModal()
+        if WindowDropdownModal.Initialized and WindowDropdownModal.Overlay and WindowDropdownModal.Overlay.Parent then
+            return
+        end
+
+        local targetParent = Library.WindowContainer or Library.MainFrame
+        if not targetParent then
+            return
+        end
+
+        local Overlay = Instance.new("Frame")
+        Overlay.Name = "WindowDropdownModal"
+        Overlay.BackgroundColor3 = Color3.fromRGB(16, 18, 24)
+        Overlay.BorderSizePixel = 0
+        Overlay.Position = UDim2.fromOffset(0, 0)
+        Overlay.Size = UDim2.fromScale(1, 1)
+        Overlay.ZIndex = 500
+        Overlay.Visible = false
+        Overlay.Parent = targetParent
+
+        local Header = Instance.new("Frame")
+        Header.BackgroundTransparency = 1
+        Header.Size = UDim2.new(1, 0, 0, 44)
+        Header.ZIndex = 501
+        Header.Parent = Overlay
+
+        local Icon = Instance.new("TextLabel")
+        Icon.BackgroundTransparency = 1
+        Icon.Position = UDim2.fromOffset(14, 10)
+        Icon.Size = UDim2.fromOffset(24, 24)
+        Icon.Text = "🌱"
+        Icon.TextSize = 18
+        Icon.ZIndex = 502
+        Icon.Parent = Header
+
+        local Title = Instance.new("TextLabel")
+        Title.BackgroundTransparency = 1
+        Title.Position = UDim2.fromOffset(44, 0)
+        Title.Size = UDim2.new(1, -130, 1, 0)
+        Title.Text = "Select Option"
+        Title.TextSize = 15
+        Title.TextColor3 = Color3.fromRGB(245, 248, 255)
+        Title.Font = Enum.Font.GothamBold
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.ZIndex = 502
+        Title.Parent = Header
+
+        local DoneBtn = Instance.new("TextButton")
+        DoneBtn.AnchorPoint = Vector2.new(1, 0.5)
+        DoneBtn.BackgroundColor3 = Color3.fromRGB(30, 33, 45)
+        DoneBtn.Position = UDim2.new(1, -14, 0.5, 0)
+        DoneBtn.Size = UDim2.fromOffset(64, 26)
+        DoneBtn.Text = "Done"
+        DoneBtn.TextColor3 = Color3.fromRGB(220, 225, 240)
+        DoneBtn.TextSize = 12
+        DoneBtn.Font = Enum.Font.GothamMedium
+        DoneBtn.AutoButtonColor = false
+        DoneBtn.ZIndex = 502
+        DoneBtn.Parent = Header
+
+        local doneCorner = Instance.new("UICorner")
+        doneCorner.CornerRadius = UDim.new(0, 6)
+        doneCorner.Parent = DoneBtn
+
+        local doneStroke = Instance.new("UIStroke")
+        doneStroke.Color = Color3.fromRGB(50, 54, 72)
+        doneStroke.Thickness = 1
+        doneStroke.Parent = DoneBtn
+
+        local SearchBox = Instance.new("TextBox")
+        SearchBox.BackgroundColor3 = Color3.fromRGB(22, 25, 34)
+        SearchBox.PlaceholderText = "Search items..."
+        SearchBox.PlaceholderColor3 = Color3.fromRGB(110, 118, 140)
+        SearchBox.Position = UDim2.fromOffset(14, 44)
+        SearchBox.Size = UDim2.new(1, -28, 0, 34)
+        SearchBox.Text = ""
+        SearchBox.TextSize = 13
+        SearchBox.TextColor3 = Color3.fromRGB(245, 248, 255)
+        SearchBox.Font = Enum.Font.Gotham
+        SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+        SearchBox.ClearTextOnFocus = false
+        SearchBox.ZIndex = 502
+        SearchBox.Parent = Overlay
+
+        local searchCorner = Instance.new("UICorner")
+        searchCorner.CornerRadius = UDim.new(0, 6)
+        searchCorner.Parent = SearchBox
+
+        local searchPad = Instance.new("UIPadding")
+        searchPad.PaddingLeft = UDim.new(0, 10)
+        searchPad.Parent = SearchBox
+
+        local searchStroke = Instance.new("UIStroke")
+        searchStroke.Color = Color3.fromRGB(40, 44, 60)
+        searchStroke.Thickness = 1
+        searchStroke.Parent = SearchBox
+
+        local ListCard = Instance.new("Frame")
+        ListCard.BackgroundColor3 = Color3.fromRGB(20, 22, 30)
+        ListCard.BorderSizePixel = 0
+        ListCard.Position = UDim2.fromOffset(14, 86)
+        ListCard.Size = UDim2.new(1, -28, 1, -96)
+        ListCard.ZIndex = 502
+        ListCard.Parent = Overlay
+
+        local cardCorner = Instance.new("UICorner")
+        cardCorner.CornerRadius = UDim.new(0, 8)
+        cardCorner.Parent = ListCard
+
+        local cardStroke = Instance.new("UIStroke")
+        cardStroke.Color = Color3.fromRGB(38, 42, 58)
+        cardStroke.Thickness = 1
+        cardStroke.Parent = ListCard
+
+        local ScrollFrame = Instance.new("ScrollingFrame")
+        ScrollFrame.BackgroundTransparency = 1
+        ScrollFrame.Position = UDim2.fromOffset(6, 6)
+        ScrollFrame.Size = UDim2.new(1, -12, 1, -12)
+        ScrollFrame.ScrollBarThickness = 4
+        ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(60, 66, 88)
+        ScrollFrame.BorderSizePixel = 0
+        ScrollFrame.ZIndex = 503
+        ScrollFrame.Parent = ListCard
+
+        DoneBtn.MouseButton1Click:Connect(CloseWindowDropdownModal)
+        SearchBox:GetPropertyChangedSignal("Text"):Connect(RefreshWindowModalList)
+
+        WindowDropdownModal.Overlay = Overlay
+        WindowDropdownModal.Title = Title
+        WindowDropdownModal.Icon = Icon
+        WindowDropdownModal.DoneBtn = DoneBtn
+        WindowDropdownModal.SearchInput = SearchBox
+        WindowDropdownModal.ScrollFrame = ScrollFrame
+        WindowDropdownModal.Initialized = true
+    end
+
+    local function ShowWindowDropdownModal(Dropdown)
+        EnsureWindowDropdownModal()
+        if not WindowDropdownModal.Overlay then return end
+
+        if WindowDropdownModal.IsOpen and WindowDropdownModal.ActiveDropdown == Dropdown then
+            CloseWindowDropdownModal()
+            return
+        end
+
+        if WindowDropdownModal.ActiveDropdown and WindowDropdownModal.ActiveDropdown ~= Dropdown then
+            CloseWindowDropdownModal()
+        end
+
+        local targetParent = Library.WindowContainer or Library.MainFrame
+        if targetParent and WindowDropdownModal.Overlay.Parent ~= targetParent then
+            WindowDropdownModal.Overlay.Parent = targetParent
+        end
+
+        WindowDropdownModal.ActiveDropdown = Dropdown
+        if Dropdown.ArrowImage then
+            Dropdown.ArrowImage.Rotation = 180
+            Dropdown.ArrowImage.ImageTransparency = 0
+        end
+        WindowDropdownModal.Title.Text = Dropdown.Text or "Select Option"
+        if WindowDropdownModal.Icon then
+            WindowDropdownModal.Icon.Text = Dropdown.Icon or "🌱"
+        end
+        WindowDropdownModal.SearchInput.Text = ""
+        WindowDropdownModal.ScrollFrame.CanvasPosition = Vector2.zero
+        RefreshWindowModalList()
+        WindowDropdownModal.Overlay.Visible = true
+        WindowDropdownModal.IsOpen = true
+    end
+
 
     function Funcs:AddDropdown(Idx, Info)
         if self.Destroyed then return nil end
@@ -8498,6 +8385,7 @@ do
             Destroyed = false,
 
             Text = typeof(Info.Text) == "string" and Info.Text or nil,
+            Icon = typeof(Info.Icon) == "string" and Info.Icon or "🌱",
 
             Value = Info.Multi and {} or nil,
             Values = Info.Values,
@@ -8604,6 +8492,7 @@ do
         if ArrowIcon then
             Library:ApplyLucideIcon(ArrowImage, ArrowIcon)
         end
+        Dropdown.ArrowImage = ArrowImage
 
         local SearchBox
         if Info.Searchable then
@@ -8712,18 +8601,18 @@ do
         Dropdown.Menu = MenuTable
 
         MenuTable.Open = function()
-            ShowDropdownModal(Dropdown)
+            ShowWindowDropdownModal(Dropdown)
         end
         MenuTable.Toggle = function()
-            if DropdownModal.IsOpen and DropdownModal.ActiveDropdown == Dropdown then
-                CloseDropdownModal()
+            if WindowDropdownModal.IsOpen and WindowDropdownModal.ActiveDropdown == Dropdown then
+                CloseWindowDropdownModal()
             else
-                ShowDropdownModal(Dropdown)
+                ShowWindowDropdownModal(Dropdown)
             end
         end
         MenuTable.Close = function()
-            if DropdownModal.ActiveDropdown == Dropdown then
-                CloseDropdownModal()
+            if WindowDropdownModal.ActiveDropdown == Dropdown then
+                CloseWindowDropdownModal()
             end
         end
         if MenuTable.Menu then
@@ -9346,6 +9235,9 @@ do
             for _, Row in Pool do
                 Row:UpdateButton()
             end
+            if WindowDropdownModal.IsOpen and WindowDropdownModal.ActiveDropdown == Dropdown then
+                UpdateWindowModalRowStyles()
+            end
 
             if not Dropdown.Disabled then
                 Library:UpdateDependencyBoxes()
@@ -9373,6 +9265,9 @@ do
 
             Dropdown:BuildDropdownList()
             Dropdown:Display()
+            if WindowDropdownModal.IsOpen and WindowDropdownModal.ActiveDropdown == Dropdown then
+                RefreshWindowModalList()
+            end
 
             if Changed and not Dropdown.Disabled then
                 Library:UpdateDependencyBoxes()
@@ -9483,6 +9378,13 @@ do
 
             Label.Text = Text and Text or ""
             Label.Visible = not not Text
+        end
+
+        function Dropdown:SetIcon(newIcon: string)
+            Dropdown.Icon = typeof(newIcon) == "string" and newIcon or "🌱"
+            if WindowDropdownModal.IsOpen and WindowDropdownModal.ActiveDropdown == Dropdown and WindowDropdownModal.Icon then
+                WindowDropdownModal.Icon.Text = Dropdown.Icon
+            end
         end
 
         function Dropdown:SetDragSelect(Value: boolean)
