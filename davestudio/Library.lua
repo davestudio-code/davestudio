@@ -8073,6 +8073,7 @@ do
         label.Font = Enum.Font.Gotham
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.ZIndex = 505
+        label.RichText = true
         label.Parent = row
 
         local check = Instance.new("ImageLabel")
