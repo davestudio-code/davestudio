@@ -12332,12 +12332,14 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 local Container = New("ScrollingFrame", {
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                    AutomaticCanvasSize = Enum.AutomaticSize.None,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
-                    CanvasSize = UDim2.fromScale(0, 0),
+                    CanvasSize = UDim2.fromOffset(0, 0),
                     Position = UDim2.fromOffset(0, 35),
+                    ScrollBarImageTransparency = 1,
                     ScrollBarThickness = 0,
+                    ScrollingEnabled = false,
                     Size = UDim2.new(1, 0, 1, -35),
                     Visible = false,
                     Parent = TabboxHolder,
@@ -12415,11 +12417,15 @@ function Library:CreateWindow(WindowInfo)
                     end
 
                     local ContentSize = (List.AbsoluteContentSize.Y / Library.DPIScale) + 14
+                    local FrameSize = ContentSize
                     if Tabbox.PoppedOut then
-                        ContentSize = math.min(ContentSize, GetPopOutBodyMaxHeight(Tabbox, 35))
+                        FrameSize = math.min(ContentSize, GetPopOutBodyMaxHeight(Tabbox, 35))
                     end
 
-                    TabboxHolder.Size = UDim2.new(1, 0, 0, ContentSize + 35)
+                    local NeedsScroll = ContentSize > FrameSize + 1
+                    Container.CanvasSize = UDim2.fromOffset(0, if NeedsScroll then ContentSize else 0)
+                    Container.ScrollingEnabled = NeedsScroll
+                    TabboxHolder.Size = UDim2.new(1, 0, 0, FrameSize + 35)
                     if ParentObj.Type == "Groupbox" then
                         ParentObj:Resize()
                     end
@@ -12562,7 +12568,7 @@ function Library:CreateWindow(WindowInfo)
                 Size = UDim2.fromScale(1, 0),
                 Parent = (Info.Side == 1) and TabLeft or TabRight,
             })
-            New("UIListLayout", {
+            local BoxHolderList = New("UIListLayout", {
                 Padding = UDim.new(0, 6),
                 Parent = BoxHolder,
             })
@@ -12694,12 +12700,14 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 GroupboxContainer = New("ScrollingFrame", {
-                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                    AutomaticCanvasSize = Enum.AutomaticSize.None,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
-                    CanvasSize = UDim2.fromScale(0, 0),
+                    CanvasSize = UDim2.fromOffset(0, 0),
                     LayoutOrder = 2,
+                    ScrollBarImageTransparency = 1,
                     ScrollBarThickness = 0,
+                    ScrollingEnabled = false,
                     Size = UDim2.fromScale(1, 0),
                     Parent = GroupboxHolder,
                 })
@@ -12741,6 +12749,13 @@ function Library:CreateWindow(WindowInfo)
             local ResizeTween
             local CollapseArrowTween
 
+            local function RefreshBoxHolderLayout()
+                BoxHolder.AutomaticSize = Enum.AutomaticSize.None
+                BoxHolder.Size = UDim2.new(1, 0, 0, BoxHolderList.AbsoluteContentSize.Y / Library.DPIScale + 8)
+                BoxHolder.AutomaticSize = Enum.AutomaticSize.Y
+            end
+            Groupbox.RefreshBoxHolderLayout = RefreshBoxHolderLayout
+
             function Groupbox:Resize()
                 if ResizeTween then
                     StopTween(ResizeTween, true)
@@ -12748,10 +12763,15 @@ function Library:CreateWindow(WindowInfo)
                 end
 
                 local TopSize = (GroupboxTop.AbsoluteSize.Y / Library.DPIScale)
-                local ContainerSize = (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 14
+                local ContentSize = (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 14
+                local ContainerSize = ContentSize
                 if Groupbox.PoppedOut then
                     ContainerSize = math.min(ContainerSize, GetPopOutBodyMaxHeight(Groupbox, TopSize + 1))
                 end
+
+                local NeedsScroll = ContentSize > ContainerSize + 1
+                GroupboxContainer.CanvasSize = UDim2.fromOffset(0, if NeedsScroll then ContentSize else 0)
+                GroupboxContainer.ScrollingEnabled = NeedsScroll
 
                 local TargetSize = UDim2.new(1, 0, 0, if Groupbox.Collapsed then TopSize else (TopSize + 1 + ContainerSize))
                 GroupboxContainer.Size = UDim2.new(1, 0, 0, ContainerSize)
@@ -12771,13 +12791,24 @@ function Library:CreateWindow(WindowInfo)
                             StopTween(ResizeTween, true)
                             ResizeTween = nil
                         end
+
+                        RefreshBoxHolderLayout()
                     end))
 
                     Tween:Play()
                 else
                     GroupboxHolder.Size = TargetSize
+                    RefreshBoxHolderLayout()
                 end
             end
+
+            table.insert(Groupbox.Connections, GroupboxList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if Groupbox.Visible == false or Groupbox.Destroyed then
+                    return
+                end
+
+                Groupbox:Resize()
+            end))
 
             function Groupbox:SetDescription(Description: string | nil)
                 GroupboxDescription.Text = Description or ""
