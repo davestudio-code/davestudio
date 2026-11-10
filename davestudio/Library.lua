@@ -9198,7 +9198,7 @@ do
 
         local Holder = New("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, Dropdown.Text and 39 or 21),
+            Size = UDim2.new(1, 0, 0, Dropdown.Text and 46 or 28),
             Visible = Dropdown.Visible,
             Parent = Container,
         })
@@ -9218,7 +9218,7 @@ do
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
             Position = UDim2.fromScale(0, 1),
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1, 0, 0, 28),
             Text = "",
             TextTransparency = 1,
             ZIndex = 2,
@@ -9245,7 +9245,7 @@ do
         }); table.insert(Library.SpecificCorners, DropdownCorner)
 
         local DisplayImage = Library:CreateIcon(nil, {
-            Position = UDim2.fromOffset(-4, 3),
+            Position = UDim2.fromOffset(-4, 6),
             Size = UDim2.fromOffset(16, 16),
             ImageTransparency = 1,
             ZIndex = 2,
@@ -9255,7 +9255,7 @@ do
         local DisplayButton = New("TextButton", {
             Active = not Dropdown.Disabled,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1, 0, 0, 28),
             Text = "---",
             TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left,
